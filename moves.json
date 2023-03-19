@@ -1,0 +1,8 @@
+[
+  { "name": "Flail", "msg":[["ATTACKER flails around!!", {"damage":[5,1]}]], "type":"F"},
+  { "name": "Puppy Eyes", "msg":[["ATTACKER makes puppy dog eyes!!"], ["DEFENDER's attack fell!",{"attack":"-2"}]], "type":"F"},
+  { "name": "Tackle", "msg":[["ATTACKER tackles DEFENDER!", {"damage":[7,1]}]], "type":"A"},
+  { "name": "Weep", "msg":[["ATTACKER just starts crying!"], ["DEFENDER's attack fell!",{"attack":"-2"}]], "type":"A"},
+  { "name": "Gyrate", "msg":[["ATTACKER really shakes it, spicy style!", {"damage":[5,1]}]], "type":"S"},
+  { "name": "Flirt", "msg":[["ATTACKER asks if DEFENDER comes here often!"], ["DEFENDER's defense fell!",{"defense":"-2"}]], "type":"S"}
+]
