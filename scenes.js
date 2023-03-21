@@ -1,5 +1,6 @@
 var combat = require("./combat.js");
 var intro = require("./intro.js");
+var menu = require("./menu.js")
 var utils = require("./utils.js");
 
 module.exports = {
@@ -13,10 +14,17 @@ module.exports = {
 		process: combat.processAttackInput,
 		render: combat.drawAttackList
 	},
+	BATTLE_SELECT_TROPE: {
+		
+	},
 	
 	INTRO: {
 		id: 100,
 		process: intro.processInput,
 		render: intro.drawIntro
-	}
+	},
+	
+	MENU: require("./menu.js"),
+	
+	TROPE_LIST: require("./trope_list.js")
 }

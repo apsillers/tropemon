@@ -1,3 +1,30 @@
+const { createCanvas } = require("canvas");
+
+exports.videoStreams = {};
+
+exports.pushNewFrame = function (res, canvas) {
+	var outBuffer = canvas.toBuffer("image/jpeg", { quality: 0.45 });
+	//var outBuffer = canvas.toBuffer("image/png", { compressionLevel: 9, palette: new Uint8ClampedArray([ 255,255,255,0, 0,0,0,0 ]) });
+	//res.write(`Content-length: ${outBuffer.length}\n\n`);
+    res.write(outBuffer);
+	res.write(`--endofsection\n`);
+	res.write(`Content-Type:image/jpeg\n\n`);
+	
+	//res.write(`--endofsection\nContent-Type: image/jpeg\n\n`);
+    //res.write(outBuffer);
+		
+	console.log(outBuffer.length);
+}
+
+exports.getCanvasAndCtx = function() {
+	var dims = [160, 144];
+	const canvas = createCanvas(dims[0], dims[1]);
+    const ctx = canvas.getContext('2d');
+	ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, dims[0], dims[1]);
+	return [canvas, ctx];
+}
+
 exports.fourCornerPos = function(input, req) {
     if(input == "down" && req.state.cursorPos < 2) { req.state.cursorPos += 2; }
 	if(input == "up" && req.state.cursorPos > 1) { req.state.cursorPos -= 2; }
@@ -13,6 +40,11 @@ exports.upDownPos = function(input, req) {
 exports.upDownMidPos = function(input, req) {
 	if(input == "down" && req.state.cursorPos < 2) { req.state.cursorPos += 1; }
 	if(input == "up" && req.state.cursorPos > 0) { req.state.cursorPos -= 1; }
+}
+
+exports.oneToNPos = function(n, input, req) {
+	if(input == "down" && req.state.cursorPos <= n) { req.state.cursorPos += 1; }
+	if(input == "up" && req.state.cursorPos > 1) { req.state.cursorPos -= 1; }
 }
 
 exports.displayBoxText = function(ctx, text) {
