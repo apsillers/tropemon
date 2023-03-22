@@ -4,7 +4,7 @@ var tropes = require("./tropes.js");
 var moves = require("./moves.json");
 
 exports.drawCombat = function drawCombat(req, ctx) {
-	var topDialog = "  ATTACK     ITEM        TROPES     RUN";
+	var topDialog = "  ATTACK     CATCH       TROPES     RUN";
 	utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,11,23,34][req.state.cursorPos]}}).`), ">"));
 
     console.log("rendering battle top");
