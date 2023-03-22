@@ -43,27 +43,75 @@ exports.drawAttackList = function(req, ctx) {
 	    var attacksDialog = ` ${myTrope.learnedMoves[0].toUpperCase().padEnd(10)} ${(myTrope.learnedMoves[1]||"").toUpperCase().padEnd(10)}  ${(myTrope.learnedMoves[2]||"").toUpperCase().padEnd(10)} ${(myTrope.learnedMoves[3]||"").toUpperCase().padEnd(10)}`  ;
 	    utils.displayBoxText(ctx, attacksDialog.replace(new RegExp(`(?<=.{${[0,11,23,34][req.state.cursorPos]}}).`), ">"));
 	} else {
+		// if we are beginning combat sequence
+		if(req.state.dialogPos == 1) {
+			if(!req.state.opponentId) {
+				// if we have no opponent, randomly choose the opponent trope's move and draw
+				//setTimeout(_=>{
+					req.state.opponentMove = Math.floor(Math.random() * opTrope.learnedMoves.length);
+				//	var [canvas, ctx] = utils.getCanvasAndCtx();
+				//	req.state.scene.render(req, ctx);
+				//	stateHelper.saveState(null, req.state);
+				//	utils.pushNewFrame(utils.videoStreams[req.state.id], canvas);
+				//}, 1000);
+			} else {
+				// we have a multiplayer opponent, so set our move choice as their opponent's next move
+				var opState = stateHelper.createStateObjectFromID(req.state.opponentId);
+				opState.opponentNextMove = req.state.cursorPos;
+				
+				// if our opponent already selected their next move and pushed it into our state,
+				// load that next move into the current opponent move slot and
+				// tell their stream to re-render with our choice
+				if(req.state.opponentNextMove != 99) {
+					// make next move the current move and reset next move to 99
+					req.state.opponentMove = req.state.opponentNextMove;
+					req.state.opponentNextMove = 99;
+					opState.opponentMove = opState.opponentNextMove;
+					opState.opponentNextMove = 99;
+					var [canvas, ctx] = utils.getCanvasAndCtx();
+					opState.scene.render({ state: opState }, ctx, canvas);
+					stateHelper.saveState(null, opState);
+					// if our opponent has an active stream, push to it
+					if(utils.videoStreams[opState.id]) {
+						utils.pushNewFrame(utils.videoStreams[opState.id], canvas);
+					}
+				}
+			}
+		}
+		
 		// if the opponents hasn't chosen a move yet, wait and we'll do a redraw when they do
-		if(req.state.opponentMove == 9) {
+		if(req.state.opponentMove == 99) {
 			exports.drawCombat(req, ctx);
 			utils.displayBoxText(ctx, "Waiting on opponent's move...");
 			return;
 		}
 		
 		// get move name by cursor pos and then load in full move details
-		var myMove = myTrope.learnedMoves[req.state.cursorPos];
-		var opMove = opTrope.learnedMoves[req.state.opponentMove];
+		if(req.state.cursorPos <= 3) {
+		    var myMove = myTrope.learnedMoves[req.state.cursorPos];
+		} else if(req.state.cursorPos == 10) {
+			var myMove = "CATCH";
+		} else {
+			var myMove = "SWITCH" + (req.state.cursorPos - 3);
+		}
+		
+		if(req.state.opponentMove <= 3) {
+		    var opMove = opTrope.learnedMoves[req.state.opponentMove];
+		} else {
+			var opMove = "SWITCH" + (req.state.opponentMove - 3);
+		}
 		
 		// TODO: sort by speed
-		var firstTrope = myTrope;
-		var secondTrope = opTrope;
+		var [firstMove, secondMove, firstTrope, secondTrope] = speedSortMovesAndTropes(myMove, opMove, myTrope, opTrope, req.state.id, req.state.opponentId);
 		
-		if(myTrope.hp == 0) {
-			var failMsg = myTrope.name + " fainted!";
+		// show faint if hp==0 and not actively switching away
+		// (i.e., don't show faint if there is a SWITCH away from the active trope)
+		if(myTrope.hp == 0 && !(myMove.startsWith("SWITCH") && req.state.whichTropeActive != +myMove[6])) {
+			var failMsg = myTrope.name.toUpperCase() + " fainted!";
 			var anyAlive = false;
 			req.state.cursorPos = 0;
 			req.state.dialogPos = 0;
-			req.state.opponentMove = 9;
+			req.state.opponentMove = 99;
 			var scenes = require("./scenes.js");
 			
 			for(var i=1; i<=6; i++) {
@@ -76,9 +124,11 @@ exports.drawAttackList = function(req, ctx) {
 			    req.state.scene = scenes.MENU;
                 
 			} else {
-				// TODO: switch tropes
+				console.log("selecting new trope after faint");
 				req.state.scene = scenes.TROPE_LIST;
 				req.state.dialogPos = 1;
+				// HACK: use invalid TROPE_LIST cursor state to allow a free press to render
+				req.state.cursorPos = 0;
 			}
 			exports.drawCombat(req, ctx);
 			utils.displayBoxText(ctx, failMsg);
@@ -87,8 +137,8 @@ exports.drawAttackList = function(req, ctx) {
 		}
 		
 		// make the sequence of [dialog_message, effect] tuples for each move and concat them
-		var sequence = [...makeMessagesForMove(myMove, firstTrope, secondTrope),
-		                ...makeMessagesForMove(opMove, secondTrope, firstTrope)]
+		var sequence = [...makeMessagesForMove(firstMove, firstTrope, secondTrope),
+		                ...makeMessagesForMove(secondMove, secondTrope, firstTrope)]
 
         // show this message, process combat effects
 		if(sequence[req.state.dialogPos-1]) {
@@ -104,12 +154,23 @@ exports.drawAttackList = function(req, ctx) {
 					effect.target.hp = Math.max(0, effect.target.hp);
 				}
 				if("attack" in effect) {
-					effect.target.atackMod += effect.attack;
+					effect.target.attackMod += +effect.attack;
 				}
 				if("defense" in effect) {
-					effect.target.defenseMod += effect.defense;
+					effect.target.defenseMod += +effect.defense;
 				}
-				
+				if("switchTo" in effect) {
+					if(effect.self == myTrope) {
+						req.state.whichTropeActive = effect.switchTo;
+						msg += "with " + tropes.tropeFromState(req.state["trope" + req.state.whichTropeActive]).name.toUpperCase() + "!";
+					} else {
+						// only multiplayer opponents can switch, so we know opState exists
+						opState.whichTropeActive = effect.switchTo;
+						req.state["tropeOpponent"] = tropes.tropeFromState(opState["trope" + opState.whichTropeActive]);
+						msg += "with " + req.state.tropeOpponent.name.toUpperCase() + "!";
+						stateHelper.saveState(null, opState);
+					}
+				}
 			}
 			
 			exports.drawCombat(req, ctx);
@@ -118,9 +179,9 @@ exports.drawAttackList = function(req, ctx) {
 
         // if we just rendered the last message, set cursosrPos=9 to signal a return to top menu
 		if(req.state.dialogPos == sequence.length) {
-			req.state.cursorPos = 9;
+			req.state.cursorPos = 99;
 			req.state.dialogPos = 0;
-			req.state.opponentMove = 9;
+			req.state.opponentMove = 99;
 		}
 		
 	}
@@ -132,11 +193,11 @@ exports.processAttackInput = function(input, req) {
 	var stateHelper = require("./state.js");
 	
 	// signal to return to battle top menu
-	if(req.state.cursorPos == 9) {
+	if(req.state.cursorPos == 99) {
 	    var scenes = require("./scenes.js");
 		req.state.scene = scenes.BATTLE_TOP;
 		req.state.cursorPos = 0;
-		console.log("just hit cursor 9"); 
+		console.log("just hit cursor 99"); 
 		return;
 	}
 	
@@ -150,33 +211,6 @@ exports.processAttackInput = function(input, req) {
 			if(myTrope.learnedMoves[req.state.cursorPos]) {
 				// dialogPos=1 signals to the renderer to begin showing the combat sequence
     	        req.state.dialogPos = 1;
-				if(!req.state.opponentId) {
-				    setTimeout(_=>{
-						req.state.opponentMove = Math.floor(Math.random() * opTrope.learnedMoves.length);
-						var [canvas, ctx] = utils.getCanvasAndCtx();
-						req.state.scene.render(req, ctx);
-						stateHelper.saveState(null, req.state);
-						utils.pushNewFrame(utils.videoStreams[req.state.id], canvas);
-					}, 1000);
-			    } else {
-					// we have a multiplayer opponent, so set our move as their opponent's next move
-					var opState = stateHelper.createStateObjectFromID(req.state.opponentId);
-					opState.opponentNextMove = req.state.cursorPos;
-					
-					// if our opponent already selected their next move and pushed it into our state,
-					// load that next move into the current opponent move slot and
-					// tell their stream to re-render with our choice
-					if(req.state.opponentNextMove != 9) {
-						req.state.opponentMove = req.state.opponentNextMove;
-						req.state.opponentNextMove = 9;
-						opState.opponentMove = opState.opponentNextMove;
-						opState.opponentNextMove = 9;
-						var [canvas, ctx] = utils.getCanvasAndCtx();
-						opState.scene.render({ state: opState }, ctx, canvas);
-						stateHelper.saveState(null, opState);
-						utils.pushNewFrame(utils.videoStreams[opState.id], canvas);
-					}
-				}
 			}
 	    }
 		// b goes back to top
@@ -185,7 +219,7 @@ exports.processAttackInput = function(input, req) {
 			req.state.cursorPos = 0;
 	    }
 	} else {
-		if(req.state.opponentMove != 9) {
+		if(req.state.opponentMove != 99) {
     		req.state.dialogPos++;
 		}
 	}
@@ -199,12 +233,33 @@ exports.processInput = function(input, req, ctx) {
 	
 
 	if(input == "a") {
+		// attacks
 	    if(req.state.cursorPos == 0) {
 	        req.state.scene = scenes.BATTLE_ATTACKS;
 			req.state.dialogPos = 0;
 	    }
+		
+		// catch
+	    if(req.state.cursorPos == 1) {
+			// if not a multiplayer opponent, select "catch" (10) as your action instead of attack
+			if(!req.state.opponentId) {
+			//    req.state.scene = scenes.BATTLE_ATTACKS;
+			//    req.state.dialogPos = 1;
+			//    req.state.cursorPos = 10;
+			}
+	    }
+		
+		// tropes
+		if(req.state.cursorPos == 2) {
+			req.state.scene = scenes.TROPE_LIST;
+			req.state.dialogPos = 1;
+			req.state.cursorPos = 1;
+		}
+		
+		// run
 		if(req.state.cursorPos == 3) {
-	        req.state.scene = scenes.RUN;
+			// TODO
+	        //req.state.scene = scenes.RUN;
 	    }
 	}
 }
@@ -244,10 +299,49 @@ function injectEffectiveMessage(msgs, move, trope) {
 	if(index != -1) { msgs.splice(index+1, 0, ["It's not very effective..."]); }
 }
 
+function speedSortMovesAndTropes(move1, move2, trope1, trope2, id1, id2) {
+	if(move1 == "CATCH") { return [move1, move2, trope1, trope2]; }
+	if(move2 == "CATCH") { return [move2, move1, trope2, trope1]; }
+	
+	// always do switches first before a non-switch other move
+	if(move1.startsWith("SWITCH") && !move2.startsWith("SWITCH")) {
+		return [move1, move2, trope1, trope2];
+	}
+	if(move2.startsWith("SWITCH") && !move1.startsWith("SWITCH")) {
+		return [move2, move1, trope2, trope1];
+	}
+	
+	// fluff is fastest, angst is slowest, so any non-same type combos
+	// with an F or an A must resolve in F's favor and A's disfavor
+	if((trope1.type=="F" && trope2.type!="F") || (trope2.type=="A" && trope1.type!="A")) {
+		return [move1, move2, trope1, trope2];
+	}
+	if((trope2.type=="F" && trope1.type!="F") || (trope1.type=="A" && trope2.type!="A")) {
+		return [move2, move1, trope2, trope1];
+	}
+	
+	// type is same, so just lex sort the attack names, and we'll do it that way, I guess??
+	if(move1 < move2) {
+		return [move1, move2, trope1, trope2];
+	}
+	if(move1 < move2) {
+		return [move2, move1, trope2, trope1];
+	}
+	
+	// same trope types, same move names, uhhh... sort by player ID, then, why not
+	return id1>id2 ? [move1, move2, trope1, trope2] : [move2, move1, trope2, trope1];
+}
+
 function makeMessagesForMove(moveName, attacker, defender) {
-	var move = moves.find(m=>m.name==moveName);
-	var moveMsgs = move.msg.slice();
-	injectEffectiveMessage(moveMsgs, move, defender);
+	console.log(moveName);
+	if(moveName.startsWith("SWITCH")) {
+		moveMsgs = [["ATTACKER is swapped out ", {switchTo:+moveName[6]}]];
+		var move = {};
+	} else {
+	    var move = moves.find(m=>m.name==moveName);
+	    var moveMsgs = move.msg.slice();
+	    injectEffectiveMessage(moveMsgs, move, defender);
+	}
 	return moveMsgs.map(m=>[
 	              m[0].replace("ATTACKER",attacker.name.toUpperCase()).replace("DEFENDER",defender.name.toUpperCase()),
 				  m[1] && Object.assign({target:defender, self:attacker, type:move.type}, m[1])

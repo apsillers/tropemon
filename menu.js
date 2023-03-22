@@ -14,11 +14,14 @@ exports.process = function(input, req) {
 	if(input == "a") {
 		if(req.state.cursorPos == 0) {
 			// random battle
+			// req.state.opponentTrope = random()
+			// req.state.scene = scenes.BATTLE_TOP;
+			// req.state.dialogPos = 0;
 		}
 		if(req.state.cursorPos == 1) {
 			// reorder
 			req.state.scene = scenes.TROPE_LIST;
-			req.state.dialogPos = 1;
+			req.state.dialogPos = 0;
 			req.state.cursorPos = 1;
 		}
 		if(req.state.cursorPos == 2) {

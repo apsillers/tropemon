@@ -4,6 +4,8 @@ var tropes = require("./tropes.js");
 exports.id = 102;
 
 exports.render = function (req, ctx) {
+	if(req.state.cursorPos == 0) { req.state.cursorPos = 1; }
+	
 	for(var i=1; i<=6; i++) {
 		var trope = tropes.tropeFromState(req.state["trope" + i]);
 		if(!trope) { continue; }
@@ -25,11 +27,15 @@ exports.render = function (req, ctx) {
 exports.process = function(input, req) {
     var scenes = require("./scenes.js");
 	
-	if(input == "down" && (req.state.cursorPos & 7) <= 6) { req.state.cursorPos += 1; }
+	// honestly I don't know why this bounds checking works, but it does, and I can't spent time making it better right now
+	for(var i=1; i<=6; i++) { if(!tropes.tropeFromState(req.state["trope" + i])) { break; } }
+	var max = i - 2;
+	
+	if(input == "down" && (req.state.cursorPos & 7) <= max) { req.state.cursorPos += 1; }
 	if(input == "up" && (req.state.cursorPos & 7) > 1) { req.state.cursorPos -= 1; }
 
 	// swapping Trope
-	if(req.state.dialogPos == 1) {
+	if(req.state.dialogPos == 0) {
 		if(input == "a") {
 			if(!tropes.tropeFromState(req.state["trope" + (req.state.cursorPos & 7)])) {
 				return;
@@ -66,9 +72,29 @@ exports.process = function(input, req) {
 		}
 	}
 
-	// picking trope after faint
-	if(req.state.dialogPos == 0) {
-		
+	// picking trope to switch during battle
+	if(req.state.dialogPos > 0) {
+		if(input == "a") {
+			if(req.state.cursorPos == 0) { req.state.cursorPos = 1; return; }
+			
+			// can't switch to already-active trope
+			if(req.state.cursorPos == req.state.whichTropeActive) { return; }
+			
+			// cursorPos=4 means swtich to trope 1, pos=5 mean to trope 2, etc.
+			req.state.cursorPos += 3;
+			req.state.scene = scenes.BATTLE_ATTACKS;
+			// tell BATTLE_ATTACKS to begin animation
+			req.state.dialogPos = 1;
+		}
+		if(input == "b") {
+			// can't back out if your active trope has fainted
+			if(tropes.tropeFromState(req.state["trope" + req.state.whichTropeActive]).hp == 0) { return; }
+			else {
+				// this isn't a mandatory select, back out to choose a different action
+				req.state.scene = scenes.BATTLE_TOP;
+				req.state.cursorPos = 2;
+			}
+		}
 	}
 
 }

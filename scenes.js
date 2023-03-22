@@ -14,9 +14,6 @@ module.exports = {
 		process: combat.processAttackInput,
 		render: combat.drawAttackList
 	},
-	BATTLE_SELECT_TROPE: {
-		
-	},
 	
 	INTRO: {
 		id: 100,
@@ -26,5 +23,7 @@ module.exports = {
 	
 	MENU: require("./menu.js"),
 	
-	TROPE_LIST: require("./trope_list.js")
+	TROPE_LIST: require("./trope_list.js"),
+	
+	
 }
