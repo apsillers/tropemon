@@ -80,7 +80,7 @@ exports.process = function(input, req) {
 			// can't switch to already-active trope
 			if(req.state.cursorPos == req.state.whichTropeActive) { return; }
 			
-			// cursorPos=4 means swtich to trope 1, pos=5 mean to trope 2, etc.
+			// in BATTLE_ATTACKS, cursorPos=4 means swtich to trope 1, pos=5 mean to trope 2, etc.
 			req.state.cursorPos += 3;
 			req.state.scene = scenes.BATTLE_ATTACKS;
 			// tell BATTLE_ATTACKS to begin animation
@@ -116,7 +116,7 @@ function drawHPBar(ctx, x, y, name, hp, max, xp, level) {
 	ctx.lineWidth = 1;
     ctx.rect(x+1,y+6,70,4);
     ctx.stroke();
-    ctx.rect(x+1,y+7, 70 * hp / max, 2)
+    ctx.rect(x+1,y+7, (70 * xp) / (level * 100), 2)
     ctx.stroke();
     ctx.closePath();
 

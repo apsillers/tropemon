@@ -3,7 +3,7 @@ var utils = require("./utils.js");
 exports.id = 101;
 
 exports.render = function (req, ctx) {
-	var topDialog = " NEW BATTLE   REORDER   MULTIPLAYER  CREDITS";
+	var topDialog = " NEW BATTLE   REORDER   MULTIPLAYER  HEAL";
 	utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,13,23,36][req.state.cursorPos]}}).`), ">"));
 	
 }
@@ -28,7 +28,7 @@ exports.process = function(input, req) {
 			// multiplayer
 		}
 		if(req.state.cursorPos == 3) {
-			// credits??
+			// heal
 		}
 		
 	}

@@ -4,10 +4,12 @@ var tropes = require("./tropes.js");
 var moves = require("./moves.json");
 
 exports.drawCombat = function drawCombat(req, ctx) {
-	var topDialog = "  ATTACK     CATCH       TROPES     RUN";
-	utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,11,23,34][req.state.cursorPos]}}).`), ">"));
-
-    console.log("rendering battle top");
+	if(req.state.dialogPos == 10) {
+		utils.displayBoxText(ctx, "Hey, you can't catch other authors' tropes! That's rude! Not cool.");
+	} else {
+	    var topDialog = "  ATTACK     CATCH       TROPES     RUN";
+	    utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,11,23,34][req.state.cursorPos]}}).`), ">"));
+	}
 
     var myTrope = tropes.tropeFromState(req.state["trope" + req.state.whichTropeActive]);
 	var opTrope = tropes.tropeFromState(req.state["tropeOpponent"]);
@@ -43,7 +45,7 @@ exports.drawAttackList = function(req, ctx) {
 	    var attacksDialog = ` ${myTrope.learnedMoves[0].toUpperCase().padEnd(10)} ${(myTrope.learnedMoves[1]||"").toUpperCase().padEnd(10)}  ${(myTrope.learnedMoves[2]||"").toUpperCase().padEnd(10)} ${(myTrope.learnedMoves[3]||"").toUpperCase().padEnd(10)}`  ;
 	    utils.displayBoxText(ctx, attacksDialog.replace(new RegExp(`(?<=.{${[0,11,23,34][req.state.cursorPos]}}).`), ">"));
 	} else {
-		// if we are beginning combat sequence
+		// if we are beginning a new combat sequence from the top
 		if(req.state.dialogPos == 1) {
 			if(!req.state.opponentId) {
 				// if we have no opponent, randomly choose the opponent trope's move and draw
@@ -59,20 +61,23 @@ exports.drawAttackList = function(req, ctx) {
 				var opState = stateHelper.createStateObjectFromID(req.state.opponentId);
 				opState.opponentNextMove = req.state.cursorPos;
 				
-				// if our opponent already selected their next move and pushed it into our state,
-				// load that next move into the current opponent move slot and
-				// tell their stream to re-render with our choice
+				// If our opponent already selected their next move and pushed it into our state,
+				//   then each player now knows their opponent's next move.
+				// Load that next move into the current opponent-move slot and
+				//   tell their stream to re-render with our choice
 				if(req.state.opponentNextMove != 99) {
 					// make next move the current move and reset next move to 99
 					req.state.opponentMove = req.state.opponentNextMove;
 					req.state.opponentNextMove = 99;
 					opState.opponentMove = opState.opponentNextMove;
 					opState.opponentNextMove = 99;
-					var [canvas, ctx] = utils.getCanvasAndCtx();
-					opState.scene.render({ state: opState }, ctx, canvas);
-					stateHelper.saveState(null, opState);
-					// if our opponent has an active stream, push to it
+					
+					// if our opponent has an active image stream, render to a new canvas and push it to their stream
+					// (otherwise, if their not online, things will just render whenever they return and start a new stream)
 					if(utils.videoStreams[opState.id]) {
+						var [canvas, ctx] = utils.getCanvasAndCtx();
+						opState.scene.render({ state: opState }, ctx, canvas);
+						stateHelper.saveState(null, opState);
 						utils.pushNewFrame(utils.videoStreams[opState.id], canvas);
 					}
 				}
@@ -122,12 +127,14 @@ exports.drawAttackList = function(req, ctx) {
 				// TODO: quit to menu
 				failMsg += " All your tropes fainted!";
 			    req.state.scene = scenes.MENU;
-                
+				req.state.opponentId = "";
+				req.state.opponentNextMove = 99;
 			} else {
-				console.log("selecting new trope after faint");
+				// select a replacement
 				req.state.scene = scenes.TROPE_LIST;
 				req.state.dialogPos = 1;
-				// HACK: use invalid TROPE_LIST cursor state to allow a free press to render
+				// HACK: use invalid TROPE_LIST cursor state 0 to allow a free press to render
+				// (TROPE_LIST processor will correct to 1 and return immediately, and re-render)
 				req.state.cursorPos = 0;
 			}
 			exports.drawCombat(req, ctx);
@@ -136,15 +143,23 @@ exports.drawAttackList = function(req, ctx) {
 			return;
 		}
 		
+		if(opTrope.hp == 0) {
+			var msg = opTrope.name.toUpperCase() + " fainted!";
+			if(!req.state.opponentId) {
+				msg += " You win!";
+			}
+		}
+		
 		// make the sequence of [dialog_message, effect] tuples for each move and concat them
 		var sequence = [...makeMessagesForMove(firstMove, firstTrope, secondTrope),
 		                ...makeMessagesForMove(secondMove, secondTrope, firstTrope)]
 
-        // show this message, process combat effects
+        // show combat message/effect in sequence at `dialogPos-1`
 		if(sequence[req.state.dialogPos-1]) {
 		    var msg = sequence[req.state.dialogPos-1][0];
 		    var effect = sequence[req.state.dialogPos-1][1];
 			
+			// apply effect
 			if(effect) {
 				if("damage" in effect) {
 					var damage = Math.max(1, effect.damage[0] + effect.damage[1]*effect.self.level + effect.self.attackMod - effect.target.defenseMod);
@@ -230,9 +245,13 @@ exports.processInput = function(input, req, ctx) {
 	var scenes = require("./scenes.js");
 	
 	utils.fourCornerPos(input, req);
-	
 
 	if(input == "a") {
+		if(req.state.dialogPos == 10) {
+			req.state.dialogPos = 0;
+			return;
+		}
+		
 		// attacks
 	    if(req.state.cursorPos == 0) {
 	        req.state.scene = scenes.BATTLE_ATTACKS;
@@ -243,9 +262,12 @@ exports.processInput = function(input, req, ctx) {
 	    if(req.state.cursorPos == 1) {
 			// if not a multiplayer opponent, select "catch" (10) as your action instead of attack
 			if(!req.state.opponentId) {
-			//    req.state.scene = scenes.BATTLE_ATTACKS;
-			//    req.state.dialogPos = 1;
-			//    req.state.cursorPos = 10;
+				// do an "index 10" attack which is a signal to try catching
+			    //req.state.scene = scenes.BATTLE_ATTACKS;
+			    //req.state.dialogPos = 1;
+			    //req.state.cursorPos = 10;
+			} else {
+			    req.state.dialogPos = 10;
 			}
 	    }
 		
