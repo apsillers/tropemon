@@ -91,6 +91,15 @@ exports.drawAttackList = function(req, ctx) {
 			return;
 		}
 		
+		// if opponent ran away, end combat
+		if(req.state.opponentMove == 101) {
+			utils.displayBoxText(ctx, "You opponent fled the battle! You win!");
+			req.state.cursorPos = 100;
+			// combat is over, clear out opponent state
+			req.state.opponentId = "";
+			req.state.opponentNextMove = 99;
+		}
+		
 		// get move name by cursor pos and then load in full move details
 		if(req.state.cursorPos <= 3) {
 		    var myMove = myTrope.learnedMoves[req.state.cursorPos];
@@ -106,7 +115,7 @@ exports.drawAttackList = function(req, ctx) {
 			var opMove = "SWITCH" + (req.state.opponentMove - 3);
 		}
 		
-		// TODO: sort by speed
+		// sort who goes first by speed algorithm
 		var [firstMove, secondMove, firstTrope, secondTrope] = speedSortMovesAndTropes(myMove, opMove, myTrope, opTrope, req.state.id, req.state.opponentId);
 		
 		// show faint if hp==0 and not actively switching away
@@ -124,9 +133,9 @@ exports.drawAttackList = function(req, ctx) {
 				if(iTrope && iTrope.hp != 0) { anyAlive = true; break; }
 			}
 			if(!anyAlive) {
-				// TODO: quit to menu
 				failMsg += " All your tropes fainted!";
-			    req.state.scene = scenes.MENU;
+			    req.state.cursorPos = 100;
+				// combat is over, clear out opponent state
 				req.state.opponentId = "";
 				req.state.opponentNextMove = 99;
 			} else {
@@ -134,7 +143,7 @@ exports.drawAttackList = function(req, ctx) {
 				req.state.scene = scenes.TROPE_LIST;
 				req.state.dialogPos = 1;
 				// HACK: use invalid TROPE_LIST cursor state 0 to allow a free press to render
-				// (TROPE_LIST processor will correct to 1 and return immediately, and re-render)
+				// (on press, TROPE_LIST processor will correct to 1 and return immediately, and re-render)
 				req.state.cursorPos = 0;
 			}
 			exports.drawCombat(req, ctx);
@@ -145,9 +154,30 @@ exports.drawAttackList = function(req, ctx) {
 		
 		if(opTrope.hp == 0) {
 			var msg = opTrope.name.toUpperCase() + " fainted!";
+			myTrope.xp += 14;
 			if(!req.state.opponentId) {
 				msg += " You win!";
+				req.state.cursorPos = 100;
+			} else {
+				var anyAlive = false;
+				for(var i=1; i<=6; i++) {
+				    var iTrope = tropes.tropeFromState(opState["trope"+i]);
+				    if(iTrope && iTrope.hp != 0) { anyAlive = true; break; }
+			    }
+				if(anyAlive) {
+					msg += " Opponent is choosing a new trope...";
+					req.state.cursorPos = 99;
+				} else {
+					msg += " You win!";
+					req.state.cursorPos = 100;
+					// combat is over, clear out opponent state
+					req.state.opponentId = "";
+					req.state.opponentNextMove = 99;
+				}
 			}
+			exports.drawCombat(req, ctx);
+			utils.displayBoxText(ctx, msg);
+			return;
 		}
 		
 		// make the sequence of [dialog_message, effect] tuples for each move and concat them
@@ -167,17 +197,36 @@ exports.drawAttackList = function(req, ctx) {
 					if(isNotEffective(effect.type, effect.target)) { damage = Math.ceil(damage * 0.8); }
 					effect.target.hp -= damage;
 					effect.target.hp = Math.max(0, effect.target.hp);
+					effect.self.xp += 14;
+				}
+				if("heal" in effect) {
+					effect.self.hp = Math.min(effect.self.hp + effect.heal[0] + effect.heal[1] * effect.self.level, effect.self.maxHP);
+					effect.self.xp += 14;
 				}
 				if("attack" in effect) {
 					effect.target.attackMod += +effect.attack;
+					effect.self.xp += 9;
 				}
 				if("defense" in effect) {
 					effect.target.defenseMod += +effect.defense;
+					effect.self.xp += 9;
+				}
+				if("defenseSelf" in effect) {
+					effect.self.defenseMod += +effect.defenseSelf;
+					effect.self.xp += 9;
+				}
+				if("attackSelf" in effect) {
+					effect.self.attackMod += +effect.attackSelf;
+					effect.self.xp += 9;
 				}
 				if("switchTo" in effect) {
+					// if this is you
 					if(effect.self == myTrope) {
 						req.state.whichTropeActive = effect.switchTo;
-						msg += "with " + tropes.tropeFromState(req.state["trope" + req.state.whichTropeActive]).name.toUpperCase() + "!";
+						var newTrope = tropes.tropeFromState(req.state["trope" + req.state.whichTropeActive]);
+						msg += "with " + newTrope.name.toUpperCase() + "!";
+						newTrope.xp += 14;
+						req.state["trope" + req.state.whichTropeActive] = newTrope;
 					} else {
 						// only multiplayer opponents can switch, so we know opState exists
 						opState.whichTropeActive = effect.switchTo;
@@ -192,7 +241,7 @@ exports.drawAttackList = function(req, ctx) {
 			utils.displayBoxText(ctx, msg);
 		}
 
-        // if we just rendered the last message, set cursosrPos=9 to signal a return to top menu
+        // if we just rendered the last message, set cursosrPos=99 to signal a return to top menu
 		if(req.state.dialogPos == sequence.length) {
 			req.state.cursorPos = 99;
 			req.state.dialogPos = 0;
@@ -209,10 +258,23 @@ exports.processAttackInput = function(input, req) {
 	
 	// signal to return to battle top menu
 	if(req.state.cursorPos == 99) {
-	    var scenes = require("./scenes.js");
 		req.state.scene = scenes.BATTLE_TOP;
 		req.state.cursorPos = 0;
-		console.log("just hit cursor 99"); 
+		return;
+	}
+	
+	// battle has fully ended
+	if(req.state.cursorPos == 100) {
+		req.state.scene = scenes.AFTER_BATTLE;
+		req.state.cursorPos = 0;
+		req.state.dialogPos = 0;
+		for(var i=1; i<=6; i++) {
+			var iTrope = tropes.tropeFromState(req.state["trope"+i]);
+			if(!iTrope) { break; }
+			iTrope.attackMod = 0;
+			iTrope.defenseMod = 0;
+			req.state["trope"+i] = iTrope;
+		}
 		return;
 	}
 	
@@ -247,6 +309,7 @@ exports.processInput = function(input, req, ctx) {
 	utils.fourCornerPos(input, req);
 
 	if(input == "a") {
+		
 		if(req.state.dialogPos == 10) {
 			req.state.dialogPos = 0;
 			return;
@@ -280,10 +343,120 @@ exports.processInput = function(input, req, ctx) {
 		
 		// run
 		if(req.state.cursorPos == 3) {
-			// TODO
-	        //req.state.scene = scenes.RUN;
+			if(req.state.opponentId) {
+				var opState = stateHelper.createStateObjectFromID(req.state.opponentId);
+				opState.opponentNextMove = 101;
+			}
+	        req.state.scene = scenes.RUN;
 	    }
 	}
+}
+
+// post-battle messages are signaled by
+// dialogPos <= 6 : trope # has leveled up
+// dialogPos >= 7 (but < 128): trope (#-6) has evolved
+// dialogPos >= 128 : trope (#-128-6) has evolved and we're showing a second message about it
+exports.processAfterBattleInput = function(input, req) {
+	var scenes = require("./scenes.js");
+	
+	if(input == "a") {
+		// evolution takes 2 messages
+		// if we're on first evolve message, progress to the next one
+		if(req.state.dialogPos >= 7 && req.state.dialogPos < 128) {
+			req.state.dialogPos += 128;
+			return;
+		}
+		
+		var nextTrope;
+		// level the next trope with excess xp, or evolve
+		if(nextTrope = nextLeveledTrope(req) || nextEvolvedTrope(req)) {
+			req.state.dialogPos = nextTrope[0];
+		} else {
+			req.state.scene = scenes.MENU;
+			req.state.dialogPos = 0;
+			req.state.cursorPos = 0;
+		}
+	}
+}
+
+exports.drawAfterBattle = function(req, ctx) {
+	    if(req.state.dialogPos == 0) {
+			utils.displayBoxText(ctx, "Good hustle, everyone!");
+			return;
+		}
+		var msg;
+		var nextTrope;
+		if(req.state.dialogPos < 7) {
+			nextTrope = tropes.tropeFromState(req.state["trope"+req.state.dialogPos]);
+			msg = nextTrope.name + " reached level " + nextTrope.level;
+			var learnedMove = nextTrope.moves.find(m=>m[1] == nextTrope.level);
+			if(learnedMove) { msg += " and learned " + learnedMove[0] };
+			msg += "!";
+		} else if(req.state.dialogPos >= 7 && req.state.dialogPos < 128) {
+			nextTrope = tropes.tropeFromState(req.state["trope"+(req.state.dialogPos-6)]);
+			nextTrope = tropes.getUnevolvedType(nextTrope);
+			msg = "What's this?? " + nextTrope.name + " is evolving!! " + ["Amazing!", "Incredible!", "Hold on to your butts!", "Holy crap!"][~~(Math.random*4)]
+		} else {
+			nextTrope = tropes.tropeFromState(req.state["trope"+(req.state.dialogPos-128-6)]);
+			msg = "Bruh! " + tropes.getUnevolvedType(nextTrope).name + " evolved into " + nextTrope.name + "!!";
+		}
+
+		utils.displayBoxText(ctx, msg);
+		ctx.font = "80px 'Noto-Emoji'";
+		ctx.fillText(nextTrope.emoji, 30, 80);
+		
+}
+
+exports.processRun = function(input, req) {
+	if(input == "a") {
+		req.state.scene = scenes.AFTER_BATTLE;
+		req.state.cursorPos = 0;
+		req.state.dialogPos = 0;
+		for(var i=1; i<=6; i++) {
+			var iTrope = tropes.tropeFromState(req.state["trope"+i]);
+			if(!iTrope) { break; }
+			iTrope.attackMod = 0;
+			iTrope.defenseMod = 0;
+			req.state["trope"+i] = iTrope;
+		}
+	}
+}
+
+exports.drawRun = function(req, ctx) {
+	utils.displayBoxText(ctx, "All right, beat it, then! Get outta here!");
+}
+
+function nextLeveledTrope(req) {
+	var leveled = false;
+	for(var i=1; i<=6; i++) {
+		var iTrope = tropes.tropeFromState(req.state["trope"+i]);
+		while(iTrope && iTrope.xp >= iTrope.level * 100) {
+			iTrope.xp -= iTrope.level * 100;
+			iTrope.level += 1;
+			leveled = true;
+			req.state["trope"+i] = iTrope;
+		}
+		if(leveled) { break; }
+	}
+	if(leveled && iTrope) { return [i, iTrope]; }
+	return undefined;
+}
+
+function nextEvolvedTrope(req) {
+	var evolved = false;
+	for(var i=1; i<=6; i++) {
+		console.log(i, req.state["trope"+i]);
+		var iTrope = tropes.tropeFromState(req.state["trope"+i]);
+		if(iTrope && iTrope.evolve && iTrope.level >= iTrope.evolve[1]) {
+			var iName = iTrope.name;
+			iTrope = tropes.createNewTrope(iTrope.num, iTrope.level);
+			evolved = true;
+			req.state["trope"+i] = iTrope;
+		}
+		if(evolved) { break; }
+	}
+	if(evolved && iTrope) { return [6 + i, iName, iTrope]; }
+	return undefined;
 }
 
 function drawHPBar(ctx, x, y, name, hp, max, level) {

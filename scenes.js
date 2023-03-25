@@ -25,5 +25,15 @@ module.exports = {
 	
 	TROPE_LIST: require("./trope_list.js"),
 	
+	AFTER_BATTLE: {
+		id: 2,
+		process: combat.processAfterBattleInput,
+		render: combat.drawAfterBattle
+	},
 	
+	BATTLE_RUN: {
+		id: 3,
+		process: combat.processRun,
+		render: combat.drawRun
+	}
 }

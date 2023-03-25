@@ -58,8 +58,6 @@ exports.drawIntro = function drawIntro(req, ctx) {
 			ctx.fillText('😘 Smut', 5, 90);
 		}
 	}		
-
-	
 }
 
 exports.processInput = function(input, req, ctx) {

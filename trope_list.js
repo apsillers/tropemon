@@ -27,7 +27,6 @@ exports.render = function (req, ctx) {
 exports.process = function(input, req) {
     var scenes = require("./scenes.js");
 	
-	// honestly I don't know why this bounds checking works, but it does, and I can't spent time making it better right now
 	for(var i=1; i<=6; i++) { if(!tropes.tropeFromState(req.state["trope" + i])) { break; } }
 	var max = i - 2;
 	
@@ -116,7 +115,7 @@ function drawHPBar(ctx, x, y, name, hp, max, xp, level) {
 	ctx.lineWidth = 1;
     ctx.rect(x+1,y+6,70,4);
     ctx.stroke();
-    ctx.rect(x+1,y+7, (70 * xp) / (level * 100), 2)
+    ctx.rect(x+1,y+7, 70 * Math.min((xp / (level * 100)), 1), 2)
     ctx.stroke();
     ctx.closePath();
 
