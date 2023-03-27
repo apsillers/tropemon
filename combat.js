@@ -109,6 +109,7 @@ exports.drawAttackList = function(req, ctx) {
 			var myMove = "SWITCH" + (req.state.cursorPos - 3);
 		}
 		
+		// get opponent move or switch
 		if(req.state.opponentMove <= 3) {
 		    var opMove = opTrope.learnedMoves[req.state.opponentMove];
 		} else {
@@ -119,7 +120,9 @@ exports.drawAttackList = function(req, ctx) {
 		var [firstMove, secondMove, firstTrope, secondTrope] = speedSortMovesAndTropes(myMove, opMove, myTrope, opTrope, req.state.id, req.state.opponentId);
 		
 		// show faint if hp==0 and not actively switching away
-		// (i.e., don't show faint if there is a SWITCH away from the active trope)
+		// i.e., don't show faint if there is a SWITCH away from the active (fainted) trope
+		// (still DO show faint if we just did a switch TO the active trope (i.e., we swapped to this and it died immediately D: D: D:)
+		// myMove[6] is the number at the end of the SWITCH command, e.g., SWITCH1
 		if(myTrope.hp == 0 && !(myMove.startsWith("SWITCH") && req.state.whichTropeActive != +myMove[6])) {
 			var failMsg = myTrope.name.toUpperCase() + " fainted!";
 			var anyAlive = false;
@@ -139,11 +142,11 @@ exports.drawAttackList = function(req, ctx) {
 				req.state.opponentId = "";
 				req.state.opponentNextMove = 99;
 			} else {
-				// select a replacement
+				// swap in a replacement
 				req.state.scene = scenes.TROPE_LIST;
 				req.state.dialogPos = 1;
 				// HACK: use invalid TROPE_LIST cursor state 0 to allow a free press to render
-				// (on press, TROPE_LIST processor will correct to 1 and return immediately, and re-render)
+				// (on any press or render, TROPE_LIST processor will correct to 1, return immediately, and re-render)
 				req.state.cursorPos = 0;
 			}
 			exports.drawCombat(req, ctx);
@@ -152,13 +155,16 @@ exports.drawAttackList = function(req, ctx) {
 			return;
 		}
 		
+		// this opponent has fainted
 		if(opTrope.hp == 0) {
 			var msg = opTrope.name.toUpperCase() + " fainted!";
-			myTrope.xp += 14;
+			myTrope.xp += 15 + opTrope.level*10;
+			// if this is a single player battle, it's over
 			if(!req.state.opponentId) {
 				msg += " You win!";
 				req.state.cursorPos = 100;
 			} else {
+				// if this is a multiplayer battle, see if opponent has any tropes left alive
 				var anyAlive = false;
 				for(var i=1; i<=6; i++) {
 				    var iTrope = tropes.tropeFromState(opState["trope"+i]);
@@ -168,6 +174,7 @@ exports.drawAttackList = function(req, ctx) {
 					msg += " Opponent is choosing a new trope...";
 					req.state.cursorPos = 99;
 				} else {
+					// opponent has no more alive tropes, game over
 					msg += " You win!";
 					req.state.cursorPos = 100;
 					// combat is over, clear out opponent state
@@ -191,17 +198,22 @@ exports.drawAttackList = function(req, ctx) {
 			
 			// apply effect
 			if(effect) {
-				if("damage" in effect) {
+				if("damage" in effect || "drain" in effect) {
 					var damage = Math.max(1, effect.damage[0] + effect.damage[1]*effect.self.level + effect.self.attackMod - effect.target.defenseMod);
 					if(isEffective(effect.type, effect.target)) { damage = Math.ceil(damage * 1.2); }
 					if(isNotEffective(effect.type, effect.target)) { damage = Math.ceil(damage * 0.8); }
+					// "drain" means steal HP: compute how much HP is actually lost, and add it to HP, not going over our max
+					if("drain" in effect) {
+						var gain = Math.min(damage, effect.target.hp);
+						effect.self.hp = Math.min(effect.self.hp + gain, effect.self.maxHP);
+					}
 					effect.target.hp -= damage;
 					effect.target.hp = Math.max(0, effect.target.hp);
 					effect.self.xp += 14;
 				}
 				if("heal" in effect) {
 					effect.self.hp = Math.min(effect.self.hp + effect.heal[0] + effect.heal[1] * effect.self.level, effect.self.maxHP);
-					effect.self.xp += 14;
+					effect.self.xp += 9;
 				}
 				if("attack" in effect) {
 					effect.target.attackMod += +effect.attack;
@@ -219,9 +231,31 @@ exports.drawAttackList = function(req, ctx) {
 					effect.self.attackMod += +effect.attackSelf;
 					effect.self.xp += 9;
 				}
+				if("caught" in effect) {
+					var freeSlot = false;
+					for(var i=1; i<=6; i++) {
+						var iTrope = tropes.tropeFromState(req.state["trope"+i]);
+						if(!iTrope) { freeSlot = i; break; }
+					}
+					if(freeSlot) {
+						req.state["trope"+i] = req.state["tropeOpponent"];
+						req.state.cursorPos = 100;
+					} else {
+						// make a permanent replacement, dialogPos = 2
+						req.state.scene = scenes.TROPE_LIST;
+						req.state.dialogPos = 2;
+						// HACK: use invalid TROPE_LIST cursor state 0 to allow a free press to render
+						// (on any press or render, TROPE_LIST processor will correct to 1, return immediately, and re-render)
+						req.state.cursorPos = 0;
+					}
+				}
 				if("switchTo" in effect) {
 					// if this is you
 					if(effect.self == myTrope) {
+						// give xp for hangin in there last round, and make sure it saves its state
+						myTrope.xp += 14;
+						req.state["trope" + req.state.whichTropeActive] = myTrope;
+						
 						req.state.whichTropeActive = effect.switchTo;
 						var newTrope = tropes.tropeFromState(req.state["trope" + req.state.whichTropeActive]);
 						msg += "with " + newTrope.name.toUpperCase() + "!";
@@ -310,6 +344,7 @@ exports.processInput = function(input, req, ctx) {
 
 	if(input == "a") {
 		
+		// if showing catch error message, return to dialog 0, top menu
 		if(req.state.dialogPos == 10) {
 			req.state.dialogPos = 0;
 			return;
@@ -326,9 +361,9 @@ exports.processInput = function(input, req, ctx) {
 			// if not a multiplayer opponent, select "catch" (10) as your action instead of attack
 			if(!req.state.opponentId) {
 				// do an "index 10" attack which is a signal to try catching
-			    //req.state.scene = scenes.BATTLE_ATTACKS;
-			    //req.state.dialogPos = 1;
-			    //req.state.cursorPos = 10;
+			    req.state.scene = scenes.BATTLE_ATTACKS;
+			    req.state.dialogPos = 1;
+			    req.state.cursorPos = 10;
 			} else {
 			    req.state.dialogPos = 10;
 			}
@@ -347,7 +382,7 @@ exports.processInput = function(input, req, ctx) {
 				var opState = stateHelper.createStateObjectFromID(req.state.opponentId);
 				opState.opponentNextMove = 101;
 			}
-	        req.state.scene = scenes.RUN;
+	        req.state.scene = scenes.BATTLE_RUN;
 	    }
 	}
 }
@@ -370,6 +405,7 @@ exports.processAfterBattleInput = function(input, req) {
 		var nextTrope;
 		// level the next trope with excess xp, or evolve
 		if(nextTrope = nextLeveledTrope(req) || nextEvolvedTrope(req)) {
+			console.log("setting dialogPos", nextTrope[0]);
 			req.state.dialogPos = nextTrope[0];
 		} else {
 			req.state.scene = scenes.MENU;
@@ -393,9 +429,12 @@ exports.drawAfterBattle = function(req, ctx) {
 			if(learnedMove) { msg += " and learned " + learnedMove[0] };
 			msg += "!";
 		} else if(req.state.dialogPos >= 7 && req.state.dialogPos < 128) {
+			console.log(req.state.dialogPos)
 			nextTrope = tropes.tropeFromState(req.state["trope"+(req.state.dialogPos-6)]);
+			console.log(nextTrope)
 			nextTrope = tropes.getUnevolvedType(nextTrope);
-			msg = "What's this?? " + nextTrope.name + " is evolving!! " + ["Amazing!", "Incredible!", "Hold on to your butts!", "Holy crap!"][~~(Math.random*4)]
+			console.log("unevolve output:", nextTrope)
+			msg = "What's this?? " + nextTrope.name + " is evolving!! " + ["Amazing!", "Incredible!", "Hold on to your butts!", "Holy crap!"][~~(Math.random()*4)]
 		} else {
 			nextTrope = tropes.tropeFromState(req.state["trope"+(req.state.dialogPos-128-6)]);
 			msg = "Bruh! " + tropes.getUnevolvedType(nextTrope).name + " evolved into " + nextTrope.name + "!!";
@@ -408,6 +447,7 @@ exports.drawAfterBattle = function(req, ctx) {
 }
 
 exports.processRun = function(input, req) {
+	var scenes = require("./scenes.js");
 	if(input == "a") {
 		req.state.scene = scenes.AFTER_BATTLE;
 		req.state.cursorPos = 0;
@@ -449,7 +489,8 @@ function nextEvolvedTrope(req) {
 		var iTrope = tropes.tropeFromState(req.state["trope"+i]);
 		if(iTrope && iTrope.evolve && iTrope.level >= iTrope.evolve[1]) {
 			var iName = iTrope.name;
-			iTrope = tropes.createNewTrope(iTrope.num, iTrope.level);
+			iTrope = tropes.createNewTrope(iTrope.evolve[0], iTrope.level);
+			console.log("evolving", iName, "into", iTrope.name);
 			evolved = true;
 			req.state["trope"+i] = iTrope;
 		}
@@ -532,6 +573,17 @@ function makeMessagesForMove(moveName, attacker, defender) {
 	if(moveName.startsWith("SWITCH")) {
 		moveMsgs = [["ATTACKER is swapped out ", {switchTo:+moveName[6]}]];
 		var move = {};
+	} else if(moveName == "CATCH") {
+		if(defender.hp > defender.maxHP / 3) {
+			moveMsgs = [["Trying to catch DEFENDER..."], ["DEFENDER's HP is still too high!"]];
+		} else if(Math.random() > (defender.hp / (defender.maxHP / 3))) {
+			// we got em
+			var freeSlot = false;
+			for(var i=1; i<=6; i++) {
+				if(!tropes.tropeFromState(opState["trope"+i])) { freeSlot = i; break; }
+			}
+			moveMsgs = [["Trying to catch DEFENDER..."], ["You got DEFENDER!" + (freeSlot?"":" Pick a trope to set free, or B to cancel."), { "caught": true }]];
+		}
 	} else {
 	    var move = moves.find(m=>m.name==moveName);
 	    var moveMsgs = move.msg.slice();

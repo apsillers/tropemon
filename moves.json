@@ -11,5 +11,6 @@
   { "name": "Flirt", "msg":[["ATTACKER asks if DEFENDER comes here often!"], ["DEFENDER's defense fell!",{"defense":-2}]], "type":"S", "pp":30},
   { "name": "Smolder", "msg":[["ATTACKER gives a sultry stare..."], ["ATTACKER's attack rose! DEFENDER's defense fell!"], ["DEFENDER's defense fell!",{"defense":-1, "attackSelf":1}]], "type":"S", "pp":30},
   { "name": "Ooh La La", "msg":[["ATTACKER is too hot to handle!",{"heal":[0,1], "damage":[5,1] }]], "type":"S", "pp":30},
-  { "name": "Rez ur gays", "msg":[["ATTACKER flails around!", {"damage":[5,1]}]], "type":"F", "pp":5 }
+  { "name": "Rezurgays", "msg":[["ATTACKER flails around!", {"damage":[5,1]}]], "type":"F", "pp":5 },
+  { "name": "Slurp", "msg":[["ATTACKER slurps up some of DEFENDER's HP!",{"drain":[3,1] }]], "type":"S", "pp":30}
 ]

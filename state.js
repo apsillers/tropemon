@@ -18,7 +18,7 @@ var fields = exports.fields = [
   { name:"worldX", "symbol":"h", default:0, "desc":"player coordinate" },
   { name:"worldY", "symbol":"h", default:0, "desc":"player coordinate" },
   { name:"whichTropeActive", "symbol":"B", default:1, "desc":"which trope is active in battle" },
-  { name:"trope1", symbol:"12A", default:[1, 1, 25, 10, 10, 10, 10, 0, 0, 99, 0], desc:"" },
+  { name:"trope1", symbol:"12A", default:[1, 3, 25, 10, 10, 10, 10, 0, 0, 299, 0], desc:"" },
   { name:"trope2", symbol:"12A", default:[2, 10, 1, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
   { name:"trope3", symbol:"12A", default:[0, 3, 12, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
   { name:"trope4", symbol:"12A", default:[0, 11, 12, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },

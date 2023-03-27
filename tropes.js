@@ -4,15 +4,17 @@ var tropes = [
   { "num":2, "name":"Lil MeowMeow", "emoji":"😿", "moves": [["Flail", 1], ["Puppy Eyes", 1], ["Comfort", 3], ["Bare Soul",5]], "baseHP":20, "hpLvl":6, "type":"F", "minLevel":4 },
   { "num":3, "name":"Pining", "emoji":"🥺", "moves": [["Tackle", 1], ["Weep", 1], ["Bemoan", 3], ["Fury",5]], "baseHP":20, "hpLvl":5, "evolve":[4,4], "type":"A" },
   { "num":4, "name":"Yearning", "emoji":"😭", "moves": [["Tackle", 1], ["Weep", 1], ["Bemoan", 3], ["Fury",5]], "baseHP":20, "hpLvl":5, "type":"A", "minLevel":4 },
-  { "num":5, "name":"Fanservice", "emoji":"😘", "moves": [["Gyrate", 1], ["Flirt", 1], ["Smoulder", 3], ["Ooh La La",5]], "baseHP":20, "hpLvl":5, "evolve":[6,4], "type":"S" },
-  { "num":6, "name":"Explicit", "emoji":"😈", "moves": [["Gyrate", 1], ["Flirt", 1], ["Smoulder", 3], ["Ooh La La",5]], "baseHP":20, "hpLvl":5, "type":"S", "minLevel":4 }
+  { "num":5, "name":"Fanservice", "emoji":"😘", "moves": [["Gyrate", 1], ["Flirt", 1], ["Smolder", 3], ["Ooh La La",5]], "baseHP":20, "hpLvl":5, "evolve":[6,4], "type":"S" },
+  { "num":6, "name":"Explicit", "emoji":"😈", "moves": [["Gyrate", 1], ["Flirt", 1], ["Smolder", 3], ["Ooh La La",5]], "baseHP":20, "hpLvl":5, "type":"S", "minLevel":4 }
 ];
 exports.randomTrope = function(level, predicate) {
-	var tropeSpace = tropes.slice();
+	var tropeSpace = tropes.slice(1);
 	if(predicate) { tropeSpace = tropeSpace.filter(predicate); }
+	console.log(tropeSpace.map(t=>t.name))
 	tropeSpace = tropeSpace.filter(t=>!t.minLevel || level >= t.minLevel);
-	var randomType = Math.floor(Math.floor(tropeSpace.length * Math.random()) + 1);
-	return exports.createNewTrope(randomType, level);
+	console.log(tropeSpace.map(t=>t.name))
+	var randomType = tropeSpace[Math.floor(tropeSpace.length * Math.random())];
+	return exports.createNewTrope(randomType.num, level);
 }
 var moves = require("./moves.json");
 

@@ -30,25 +30,29 @@ exports.process = function(input, req) {
 	for(var i=1; i<=6; i++) { if(!tropes.tropeFromState(req.state["trope" + i])) { break; } }
 	var max = i - 2;
 	
+	// move cursor based on low 3 bits of cursorPos
 	if(input == "down" && (req.state.cursorPos & 7) <= max) { req.state.cursorPos += 1; }
 	if(input == "up" && (req.state.cursorPos & 7) > 1) { req.state.cursorPos -= 1; }
 
 	// swapping Trope
 	if(req.state.dialogPos == 0) {
 		if(input == "a") {
+			// don't select empty solts, if we got to them somehow
 			if(!tropes.tropeFromState(req.state["trope" + (req.state.cursorPos & 7)])) {
 				return;
 			}
 			
-			// if the bits 4-6 are empty, no selection yet
+			// if the high bits 4-6 are empty, no selection yet
 			if((req.state.cursorPos & 56) == 0) {
-				// when we make a first selection, store the current position up three bits
+				// when we make a first selection, store the selected position up three bits (the "high bits", versus the 1-3 "low bits")
 				var oldCursor = req.state.cursorPos;
 				req.state.cursorPos <<= 3;
 				req.state.cursorPos += oldCursor;
 			} else {
 				// we already have a selection stored in the high bits, so do the swap
+				// shift the high bits into their original position, 00xxx000 >> 00000xxx
 				var first = (req.state.cursorPos & 56) >> 3;
+				// capture the low bts of the current position
 				var second = req.state.cursorPos & 7;
 				
 				var firstTrope = req.state["trope" + first];
@@ -57,22 +61,26 @@ exports.process = function(input, req) {
 				req.state["trope" + first] = secondTrope;
 				req.state["trope" + second] = firstTrope;
 				
-				// drop the high-bits selection
+				// after swap, drop the high bits of the selection, only preserve the actual current position in bits 1-3
 				req.state.cursorPos &= 7;
 			}
 		}
 		if(input == "b") {
+			// if a previous selection has been made, forget it
 			if(req.state.cursorPos & 56) { req.state.cursorPos &= 7; }
 			else {
+				// if no selection has been made, go back to menu
 				req.state.scene = scenes.MENU;
-				req.state.cursorPos = 0;
+				req.state.cursorPos = 1;
 				req.state.dialogPos = 0;
 			}
 		}
+		// always return, to avoid matching another dialogPos after change
+		return;
 	}
 
 	// picking trope to switch during battle
-	if(req.state.dialogPos > 0) {
+	if(req.state.dialogPos == 1) {
 		if(input == "a") {
 			if(req.state.cursorPos == 0) { req.state.cursorPos = 1; return; }
 			
@@ -80,6 +88,7 @@ exports.process = function(input, req) {
 			if(req.state.cursorPos == req.state.whichTropeActive) { return; }
 			
 			// in BATTLE_ATTACKS, cursorPos=4 means swtich to trope 1, pos=5 mean to trope 2, etc.
+			// because 0-3 mean attacks 1-4
 			req.state.cursorPos += 3;
 			req.state.scene = scenes.BATTLE_ATTACKS;
 			// tell BATTLE_ATTACKS to begin animation
@@ -94,6 +103,28 @@ exports.process = function(input, req) {
 				req.state.cursorPos = 2;
 			}
 		}
+		// always return, to avoid matching another dialogPos after change
+		return;
+	}
+	
+	// choosing trope to permanently replace
+	if(req.state.dialogPos == 2) {
+		if(input == "a") {
+			if(req.state.cursorPos == 0) { req.state.cursorPos = 1; return; }
+			
+			// clobber trope #i with just-caught opponent
+			req.state["trope" + req.state.cursorPos] = req.state.tropeOpponent;
+			
+			// progress to AFTER_BATTLE
+			req.state.scene = scenes.AFTER_BATTLE;
+			req.state.dialogPos = 0;
+		}
+		if(input == "b") {
+			req.state.scene = scenes.AFTER_BATTLE;
+			req.state.dialogPos = 0;
+		}
+		// always return, to avoid matching another dialogPos after change
+		return;
 	}
 
 }

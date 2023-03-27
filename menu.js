@@ -90,6 +90,7 @@ exports.process = function(input, req) {
 			req.state.tropeOpponent = trope;
 			req.state.scene = scenes.BATTLE_TOP;
 			req.state.dialogPos = 0;
+			req.state.cursorPos = 0;
 		}
 	}
 	
