@@ -58,9 +58,10 @@ app.get("/screen", function(req, res) {
 	
 	scenes.find(req.state.scene).render(req, ctx, canvas);
 	
-	ctx.fillStyle = "black";
-	ctx.font = "12pt courier";
-	ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
+	// debug
+	//ctx.fillStyle = "black";
+	//ctx.font = "12pt courier";
+	//ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
 	
 	res.write(`Content-Type:image/jpeg\n\n`);
 	
@@ -88,9 +89,10 @@ app.get(["/d","/u","/r","/l","/a","/b"], function controlInput(req, res) {
 	scenes.find(req.state.scene).render(req, ctx, canvas);
 	stateHelper.saveState(res, req.state);
 
-	ctx.fillStyle = "black";
-    ctx.font = "12pt courier";
-	ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
+	// debug
+	//ctx.fillStyle = "black";
+	//ctx.font = "12pt courier";
+	//ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
 	
 	pushNewFrame(screenRes, canvas);
 	

@@ -2,10 +2,7 @@ var utils = require("./utils.js");
 
 exports.id = 200;
 
-//var QRCode = require('qrcode');
-
-//var freeCodes = [...Array(256).keys()];
-var freeCodes = [...Array(1).keys()];
+var freeCodes = [...Array(256).keys()];
 
 var playersByBattleId = {};
 var battleIdsByPlayer = {};

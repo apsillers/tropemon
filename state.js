@@ -12,7 +12,7 @@ Each field has
 We use this to serialize and deserialize a state cookine into a state object: the names of the fields are the names of the state object properties
 */
 var fields = exports.fields = [
-  { name:"scene", "symbol":"I", "default":scenes.MULTIPLAYER.id, "desc":"number indicating what screen we are on (startup, battle, attacks/item/tropes submenu, item, tropes, world, etc)" },
+  { name:"scene", "symbol":"I", "default":scenes.INTRO.id, "desc":"number indicating what screen we are on (startup, battle, attacks/item/tropes submenu, item, tropes, world, etc)" },
   { name:"cursorPos", "symbol":"B", default:0, "desc":"number indicating cursor position (context-dependent *what* the cursor is)" },
   { name:"dialogPos", "symbol":"B", default:0, "desc":"number indentifying displayed dialogue item" },
   { name:"worldX", "symbol":"h", default:0, "desc":"player coordinate" },
