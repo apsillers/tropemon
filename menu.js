@@ -26,13 +26,23 @@ exports.render = function (req, ctx) {
 	
 	if(req.state.dialogPos == 3) {
 		utils.displayBoxText(ctx, "Our betas have patched your tropes all up, good as new!");
+		ctx.font = "80px 'Noto-Emoji'";
+	    ctx.fillText('👩‍⚕️', 30, 80);
+		ctx.font = "30px 'Noto-Emoji'";
+		ctx.fillText('❤️', 15, 65);
+		ctx.fillText('❤️', 110, 55);
+		
 		req.state.cursorPos = 9;
 	}
 }
 
 exports.process = function(input, req) {
+	
 	var scenes = require("./scenes.js");
-	//message you cna dismiss with A to return to top menu
+	
+	req.state.tropeOpponent = [0];
+	
+	//message you can dismiss with A to return to top menu
 	if(req.state.cursorPos == 9) {
 		if(input == "a") {
 			req.state.dialogPos = 0;
@@ -46,7 +56,6 @@ exports.process = function(input, req) {
 		if(req.state.dialogPos == 0) {
 			if(req.state.cursorPos == 0) {
 				req.state.dialogPos = 1;
-				return;
 			}
 			if(req.state.cursorPos == 1) {
 				// reorder
@@ -56,6 +65,9 @@ exports.process = function(input, req) {
 			}
 			if(req.state.cursorPos == 2) {
 				// multiplayer
+				req.state.scene = scenes.MULTIPLAYER;
+				req.state.dialogPos = 0;
+				req.state.cursorPos = 0;
 			}
 			if(req.state.cursorPos == 3) {
 				req.state.dialogPos = 3;
@@ -69,6 +81,7 @@ exports.process = function(input, req) {
 					req.state["trope"+i] = trope;
 				}
 			}
+			return;
 		}
 		if(req.state.dialogPos == 1) {
 			// pick a level between 0-4 levels above your team's average level
@@ -87,10 +100,8 @@ exports.process = function(input, req) {
 			} else {
 				var trope = tropes.randomTrope(opponentLevel);
 			}
-			req.state.tropeOpponent = trope;
-			req.state.scene = scenes.BATTLE_TOP;
-			req.state.dialogPos = 0;
-			req.state.cursorPos = 0;
+			utils.setFirstActiveTrope(req);
+			utils.setupCombat(req, trope, "");
 		}
 	}
 	

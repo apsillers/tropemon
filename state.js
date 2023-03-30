@@ -12,19 +12,19 @@ Each field has
 We use this to serialize and deserialize a state cookine into a state object: the names of the fields are the names of the state object properties
 */
 var fields = exports.fields = [
-  { name:"scene", "symbol":"I", "default":scenes.MENU, "desc":"number indicating what screen we are on (startup, battle, attacks/item/tropes submenu, item, tropes, world, etc)" },
+  { name:"scene", "symbol":"I", "default":scenes.MULTIPLAYER.id, "desc":"number indicating what screen we are on (startup, battle, attacks/item/tropes submenu, item, tropes, world, etc)" },
   { name:"cursorPos", "symbol":"B", default:0, "desc":"number indicating cursor position (context-dependent *what* the cursor is)" },
   { name:"dialogPos", "symbol":"B", default:0, "desc":"number indentifying displayed dialogue item" },
   { name:"worldX", "symbol":"h", default:0, "desc":"player coordinate" },
   { name:"worldY", "symbol":"h", default:0, "desc":"player coordinate" },
   { name:"whichTropeActive", "symbol":"B", default:1, "desc":"which trope is active in battle" },
-  { name:"trope1", symbol:"12A", default:[1, 3, 25, 10, 10, 10, 10, 0, 0, 299, 0], desc:"" },
+  { name:"trope1", symbol:"12A", default:[1, 3, 5, 10, 10, 10, 10, 0, 0, 299, 0], desc:"" },
   { name:"trope2", symbol:"12A", default:[2, 10, 1, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
-  { name:"trope3", symbol:"12A", default:[0, 3, 12, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
+  { name:"trope3", symbol:"12A", default:[3, 3, 12, 10, 10, 10, 10, 0, 0, 299, 0], desc:"" },
   { name:"trope4", symbol:"12A", default:[0, 11, 12, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
   { name:"trope5", symbol:"12A", default:[0, 4, 12, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
   { name:"trope6", symbol:"12A", default:[0, 12, 12, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
-  { name:"tropeOpponent", symbol:"12A", default:[4, 10, 50, 10, 10, 10, 10, 0, 0, 0, 0], desc:"opponent's active trope" },
+  { name:"tropeOpponent", symbol:"12A", default:[4, 10, 15, 10, 10, 10, 10, 0, 0, 0, 0], desc:"opponent's active trope" },
   // oponentMove and opponentNextMove are separate because your opponent might go through the attack messages quickly
   // and then queue up a next move while you're still rendering their last one
   { name:"opponentMove", symbol:"B", default:99, desc:"attack index chosen by opponent that we are currently animating -- 99 indicates no move yet" },
@@ -60,12 +60,17 @@ exports.saveState = function(res, state) {
 		if(state["trope"+i]) { state["trope"+i] = tropes.serializeTrope(state["trope"+i]); }
 	}
 	
+	state.scene = state.scene.id || state.scene;
+	
 	states[state.id] = state;
+	
 	if(res) {
 	    res.cookie('id', state.id, { maxAge: 90000000000, httpOnly: true });
 	}
 }
 
 exports.createStateObjectFromID = function(id) {
-	return states[id] || exports.newStateObject();
+	var state = states[id] || exports.newStateObject();
+	state.scene = scenes.find(state.scene);
+	return state;
 }

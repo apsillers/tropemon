@@ -50,6 +50,6 @@ exports.createNewTrope = function(num, level=1) {
 }
 
 exports.serializeTrope = function(t) {
-	if(Array.isArray(t)) { return t; }
+	if(Array.isArray(t)) { return t.slice(); }
 	return [t.num, t.level, t.hp, t.pp1, t.pp2, t.pp3, t.pp4, t.attackMod, t.defenseMod, t.xp, t.special]
 }

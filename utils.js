@@ -1,6 +1,7 @@
 const { createCanvas } = require("canvas");
 
 exports.videoStreams = {};
+exports.homeURL = "http://localhost:8080";
 
 exports.pushNewFrame = function (res, canvas) {
 	var outBuffer = canvas.toBuffer("image/jpeg", { quality: 0.45 });
@@ -13,7 +14,7 @@ exports.pushNewFrame = function (res, canvas) {
 	//res.write(`--endofsection\nContent-Type: image/jpeg\n\n`);
     //res.write(outBuffer);
 		
-	console.log(outBuffer.length);
+	//console.log(outBuffer.length);
 }
 
 exports.getCanvasAndCtx = function() {
@@ -73,4 +74,21 @@ exports.displayBoxText = function(ctx, text) {
     if(lines[3]) {
         ctx.fillText(lines[3].substr(1), 4, 140-2);
     }
+}
+
+exports.setFirstActiveTrope = function(req) {
+	var tropes = require("./tropes.js")
+	for(var i=1; i<=6; i++) {
+		var trope = tropes.tropeFromState(req.state["trope" + i]);
+		if(trope.hp > 0) { req.state.whichTropeActive = i; break; }
+	}
+}
+
+exports.setupCombat = function(req, opponent, opId) {
+	var scenes = require("./scenes.js");
+	req.state.tropeOpponent = opponent;
+	req.state.scene = scenes.BATTLE_TOP;
+	req.state.dialogPos = 0;
+	req.state.cursorPos = 0;
+	req.state.opponentId = opId;
 }

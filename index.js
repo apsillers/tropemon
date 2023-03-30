@@ -7,11 +7,7 @@ const { loadImage, createCanvas, registerFont } = require('canvas');
 const jspack = require("jspack");
 const utils = require("./utils.js");
 
-const homeURL = "http://localhost:8080";
-
 const stateHelper = require("./state.js");
-
-console.log(stateHelper.formatStr);
 
 registerFont("./NotoEmoji-Regular.ttf", { family: "Noto Emoji",  weight: 'normal', style: 'normal' });
 
@@ -23,10 +19,10 @@ app.use(express.static('public'))
 // read or initialize the state cookie
 app.use(function (req, res, next) {
     var id = req.cookies.id;
-	console.log("id is", id);
+	//console.log("id is", id);
     req.state = stateHelper.createStateObjectFromID(id);
 	stateHelper.saveState(res, req.state);
-	console.log("state is ", req.state);
+	//console.log("state is ", req.state);
     next();
 });
 
@@ -40,10 +36,9 @@ var dims = [160, 144];
 
 // whenever the user asks for the /screen...
 app.get("/screen", function(req, res) {
+	const scenes = require("./scenes.js");
 	videoStreams[req.state.id] = res;
-    console.log("saving screen under id", req.state.id);
 
-	//console.log(videoStreams);
     var [canvas, ctx] = utils.getCanvasAndCtx();
 
     res.writeHead(200, {
@@ -56,12 +51,16 @@ app.get("/screen", function(req, res) {
 	
 	utils.displayBoxText(ctx, "This might not work in your browser...");
     res.write(`Content-Type:image/jpeg\n\n`);
-	res.write(canvas.toBuffer("image/jpeg", { quality: 0.45 }));
+	res.write(canvas.toBuffer("image/jpeg", { quality: 0.1 }));
 	res.write(`--endofsection\n`);
 	ctx.fillStyle = "white";
     ctx.fillRect(0, 0, dims[0], dims[1]);
 	
-	req.state.scene.render(req, ctx, canvas);
+	scenes.find(req.state.scene).render(req, ctx, canvas);
+	
+	ctx.fillStyle = "black";
+	ctx.font = "12pt courier";
+	ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
 	
 	res.write(`Content-Type:image/jpeg\n\n`);
 	
@@ -76,24 +75,51 @@ app.get("/screen", function(req, res) {
 });
 
 app.get(["/d","/u","/r","/l","/a","/b"], function controlInput(req, res) {
+	const scenes = require("./scenes.js");
 	var screenRes = videoStreams[req.state.id];
 	var [canvas, ctx] = utils.getCanvasAndCtx();
 
 	var controlMap = { "/d":"down", "/u":"up", "/r":"right", "/l":"left", "/a":"a", "/b":"b" };
 
-	req.state.scene.process(controlMap[req.originalUrl], req, ctx);
-	req.state.scene.render(req, ctx, canvas);
+	scenes.find(req.state.scene).process(controlMap[req.originalUrl], req, ctx);
+	
+	if(!screenRes) { res.redirect(utils.homeURL); }
+	
+	scenes.find(req.state.scene).render(req, ctx, canvas);
 	stateHelper.saveState(res, req.state);
 
-	if(!screenRes) { res.redirect(homeURL); }
+	ctx.fillStyle = "black";
+    ctx.font = "12pt courier";
+	ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
 	
 	pushNewFrame(screenRes, canvas);
 	
 	res.status(204).end();
 });
 
-app.get("/battle/:id", function(req, res) {
+app.get("/escapeHatch", function controlInput(req, res) {
+	const scenes = require("./scenes.js");
 	
+	if(scenes.find(req.state.scene) == scenes.INTRO) {
+	    res.redirect(utils.homeURL);
+    }
+	
+	req.state.scene = scenes.MENU;
+	req.state.cursorPos = 0;
+	req.state.dialogPos = 0;
+	
+	stateHelper.saveState(res, req.state);
+	
+	res.redirect(utils.homeURL);
 });
+	
 
 app.listen(8080);
+
+
+function backupState() {
+	fs.writeFile("./state.json", JSON.stringify(stateHelper.state), err=>{
+		setTimeout(backupState, 5 * 60 * 1000);
+	});
+}
+
