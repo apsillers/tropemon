@@ -3,7 +3,7 @@
   { "name": "Puppy Eyes", "msg":[["ATTACKER makes puppy dog eyes!!"], ["DEFENDER's attack fell!",{"attack":-2}]], "type":"F", "pp":30},
   { "name": "Comfort", "msg":[["ATTACKER feels a little better!", {"heal":[5,2]}], ["ATTACKER's defense rose!", {"defenseSelf":1}]], "type":"F", "pp":30},
   { "name": "Bare Soul", "msg":[["ATTACKER blasts DEFENDER with personal truth!", {"damage":[8,2]}], ["ATTACKER's own defense fell from all the vulnerability!", {"defenseSelf":-2}]], "type":"F", "pp":5},
-  { "name": "Tackle", "msg":[["ATTACKER tackles DEFENDER!", {"damage":[7,1]}]], "type":"A", "pp":30},
+  { "name": "Tackle", "msg":[["ATTACKER tackles DEFENDER!", {"damage":[6,1]}]], "type":"A", "pp":30},
   { "name": "Weep", "msg":[["ATTACKER just starts crying!"], ["DEFENDER's attack fell!",{"attack":-2}]], "type":"A", "pp":30},
   { "name": "Bemoan", "msg":[["ATTACKER lays down crushing emotion!", {"damage":[10,1]}]], "type":"A", "pp":5},
   { "name": "Fury", "msg":[["ATTACKER asks who did this to you!?", {"damage":[8,1]}], ["ATTACKER's attack rose!", {"attackSelf":2}]], "type":"A", "pp":5},
@@ -11,7 +11,9 @@
   { "name": "Flirt", "msg":[["ATTACKER asks if DEFENDER comes here often!"], ["DEFENDER's defense fell!",{"defense":-2}]], "type":"S", "pp":30},
   { "name": "Smolder", "msg":[["ATTACKER gives a sultry stare..."], ["ATTACKER's attack rose! DEFENDER's defense fell!", {"defense":-1, "attackSelf":1}]], "type":"S", "pp":30},
   { "name": "Ooh La La", "msg":[["ATTACKER is too hot to handle!",{"heal":[0,1], "damage":[5,1] }]], "type":"S", "pp":30},
-  { "name": "Rezurgays", "msg":[["ATTACKER flails around!", {"damage":[5,1]}]], "type":"F", "pp":5 },
-  { "name": "Suck", "msg":[["ATTACKER slurps up some of DEFENDER's HP!",{"drain":[3,1] }]], "type":"S", "pp":30},
-  { "name": "Harden", "msg":[["ATTACKER's defense isn't the only thing that rose!",{"defenseSelf":2}]], "type":"S", "pp":30}
+  { "name": "Rezurgays", "msg":[["ATTACKER flails around!", {"damage":[5,1]}]], "type":"F", "pp":4 },
+  { "name": "Suck", "msg":[["ATTACKER sucks up some of DEFENDER's HP!",{"drain":[3,1] }]], "type":"S", "pp":30},
+  { "name": "Harden", "msg":[["ATTACKER's defense isn't the only thing that rose!",{"defenseSelf":2}]], "type":"S", "pp":30},
+  { "name": "Sling", "msg":[["ATTACKER shoots ropes!",{"damage":[7,2]}]], "type":"S", "pp":5},
+  { "name": "Cozy Up", "msg":[["ATTACKER puts on another chunky knit sweater!",{"damage":[]}]], "type":"S", "pp":5}
 ]

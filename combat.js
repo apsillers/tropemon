@@ -5,7 +5,7 @@ var moves = require("./moves.json");
 
 exports.drawCombat = function drawCombat(req, ctx) {
 	if(req.state.dialogPos == 10) {
-		utils.displayBoxText(ctx, "Hey, you can't catch other authors' tropes! That's rude! Not cool.");
+		utils.displayBoxText(ctx, "Hey, you can't catch other authors' tropes! That's plagiarism!");
 	} else {
 	    var topDialog = "  ATTACK     CATCH       TROPES     RUN";
 	    utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,11,23,34][req.state.cursorPos]}}).`), ">"));
@@ -25,7 +25,7 @@ exports.drawCombat = function drawCombat(req, ctx) {
 }
 
 // render attack list and output
-exports.drawAttackList = function(req, ctx, canvas, isPush) {
+exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 	var stateHelper = require("./state.js");
 	var scenes  = require("./scenes.js");
 	var myTrope = tropes.tropeFromState(req.state["trope" + req.state.whichTropeActive]);
@@ -34,7 +34,7 @@ exports.drawAttackList = function(req, ctx, canvas, isPush) {
 	console.log(req.state.id, "at the top, whichTropeActive ==", req.state.whichTropeActive)
 	
 	if(req.state.opponentId) {
-		var opState = stateHelper.createStateObjectFromID(req.state.opponentId);
+		var opState = await stateHelper.createStateObjectFromID(req.state.opponentId);
 	}
 	
 	var opTrope = tropes.tropeFromState(req.state["tropeOpponent"]);
@@ -48,7 +48,7 @@ exports.drawAttackList = function(req, ctx, canvas, isPush) {
 		req.state.scene = scenes.BATTLE_TOP;
 		req.state.cursorPos = 0;
 		req.state.dialogPos = 0;
-		scenes.find(req.state.scene).render(req, ctx);
+		await scenes.find(req.state.scene).render(req, ctx);
 		return;
 	}
 	
@@ -74,6 +74,8 @@ exports.drawAttackList = function(req, ctx, canvas, isPush) {
 				
 				if(opTrope.hp == 0) { var opStartedDead = true; }
 				
+				await stateHelper.saveState(null, opState);
+
 				console.log(req.state.id, "dialog 1, set opponent's opponentNextMove to", opState.opponentNextMove)
 				
 				// If our opponent already selected their next move and pushed it into our state,
@@ -87,7 +89,7 @@ exports.drawAttackList = function(req, ctx, canvas, isPush) {
 					opState.opponentMove = opState.opponentNextMove;
 					opState.opponentNextMove = 99;
 					
-					stateHelper.saveState(null, opState);
+					await stateHelper.saveState(null, opState);
 					
 					console.log(req.state.id, "opponent already picked attacks so we are telling them to draw")
 					
@@ -95,7 +97,8 @@ exports.drawAttackList = function(req, ctx, canvas, isPush) {
 					// (otherwise, if their not online, things will just render whenever they return and start a new stream)
 					if(utils.videoStreams[opState.id]) {
 						var [opCanvas, opCtx] = utils.getCanvasAndCtx();
-						scenes.find(opState.scene).render({ state: opState }, opCtx, opCanvas, true);
+						await scenes.find(opState.scene).render({ state: opState }, opCtx, opCanvas, true);
+						await stateHelper.saveState(null, opState);
 						utils.pushNewFrame(utils.videoStreams[opState.id], opCanvas);
 					}
 				}
@@ -119,6 +122,7 @@ exports.drawAttackList = function(req, ctx, canvas, isPush) {
 			req.state.cursorPos = 100;
 			// combat is over, clear out opponent state
 			req.state.opponentId = "";
+			req.state.opponentMove = 99;
 			req.state.opponentNextMove = 99;
 			return;
 		}
@@ -169,13 +173,16 @@ exports.drawAttackList = function(req, ctx, canvas, isPush) {
 			}
 			if(!anyAlive) {
 				failMsg += " All your tropes fainted!";
-			    req.state.cursorPos = 100;
+				req.state.cursorPos = 100;
 				// combat is over, clear out opponent state
 				req.state.opponentId = "";
 				req.state.opponentNextMove = 99;
+				req.state.opponentMove = 99;
 				// tell opponent we lost
-				opState.opponentMove = 101;
-				stateHelper.saveState(null, opState);
+				if(opState) {
+					opState.opponentMove = 101;
+					await stateHelper.saveState(null, opState);
+				}
 			} else {
 				// swap in a replacement
 				req.state.scene = scenes.TROPE_LIST;
@@ -201,6 +208,7 @@ exports.drawAttackList = function(req, ctx, canvas, isPush) {
 			if(!req.state.opponentId) {
 				msg += " You win!";
 				req.state.cursorPos = 100;
+				req.state.opponentMove = 99;
 			} else {
 				// if this is a multiplayer battle
 				// if they have no more tropes, they'll set their attack to 101, to be checked elsewhere
@@ -299,9 +307,9 @@ exports.drawAttackList = function(req, ctx, canvas, isPush) {
 						req.state["trope" + req.state.whichTropeActive] = newTrope;
 					} else {
 						// only multiplayer opponents can switch, so we know opState exists
+						// show who they're switching to
 						req.state["tropeOpponent"] = tropes.tropeFromState(opState["trope" + effect.switchTo]);
 						msg += "with " + req.state.tropeOpponent.name.toUpperCase() + "!";
-						stateHelper.saveState(null, opState);
 					}
 				}
 			}
@@ -314,7 +322,7 @@ exports.drawAttackList = function(req, ctx, canvas, isPush) {
 			if(opTrope.hp != 0 && myTrope.hp != 0) {
 				req.state.cursorPos = 0;
 				req.state.dialogPos = 0;
-				scenes.BATTLE_TOP.render(req, ctx);
+				await scenes.BATTLE_TOP.render(req, ctx);
 				req.state.scene = scenes.BATTLE_TOP.id;
 				//req.state.cursorPos = 99;
 				req.state.opponentMove = 99;
@@ -378,9 +386,10 @@ exports.processAttackInput = function(input, req) {
 	
 }
 
-exports.processInput = function(input, req, ctx) {
+exports.processInput = async function(input, req, ctx) {
 	var scenes = require("./scenes.js");
-	
+	var stateHelper = require("./state.js");
+
 	utils.fourCornerPos(input, req);
 
 	if(input == "a") {
@@ -419,11 +428,18 @@ exports.processInput = function(input, req, ctx) {
 		
 		// run
 		if(req.state.cursorPos == 3) {
+			console.log("running away")
 			if(req.state.opponentId) {
-				var opState = stateHelper.createStateObjectFromID(req.state.opponentId);
+				var opState = await stateHelper.createStateObjectFromID(req.state.opponentId);
 				opState.opponentNextMove = 101;
+				await stateHelper.saveState(null, opState);
 			}
-	        req.state.scene = scenes.BATTLE_RUN;
+			req.state.scene = scenes.BATTLE_RUN;
+			req.state.opponentId = "";
+                        req.state.opponentNextMove = 99;
+			req.state.opponentMove = 99;
+
+			console.log("running", req.state)
 	    }
 	}
 }
@@ -435,6 +451,10 @@ exports.processInput = function(input, req, ctx) {
 exports.processAfterBattleInput = function(input, req) {
 	var scenes = require("./scenes.js");
 	
+	req.state.opponentMove = 99;
+	req.state.opponentNextMove = 99;
+	req.state.opponentId = "";
+
 	if(input == "a") {
 		// evolution takes 2 messages
 		// if we're on first evolve message, progress to the next one

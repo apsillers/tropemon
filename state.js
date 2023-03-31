@@ -2,6 +2,8 @@ var states = {};
 var scenes = exports.scenes = require("./scenes.js");
 var tropes = require("./tropes.js")
 
+const { createClient } = require('redis');
+
 /*
 This is the ordered list of state fields that represents a player's state
 Each field has
@@ -18,9 +20,9 @@ var fields = exports.fields = [
   { name:"worldX", "symbol":"h", default:0, "desc":"player coordinate" },
   { name:"worldY", "symbol":"h", default:0, "desc":"player coordinate" },
   { name:"whichTropeActive", "symbol":"B", default:1, "desc":"which trope is active in battle" },
-  { name:"trope1", symbol:"12A", default:[1, 3, 5, 10, 10, 10, 10, 0, 0, 299, 0], desc:"" },
-  { name:"trope2", symbol:"12A", default:[2, 10, 1, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
-  { name:"trope3", symbol:"12A", default:[3, 3, 12, 10, 10, 10, 10, 0, 0, 299, 0], desc:"" },
+  { name:"trope1", symbol:"12A", default:[0, 3, 5, 10, 10, 10, 10, 0, 0, 299, 0], desc:"" },
+  { name:"trope2", symbol:"12A", default:[0, 10, 1, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
+  { name:"trope3", symbol:"12A", default:[0, 3, 12, 10, 10, 10, 10, 0, 0, 299, 0], desc:"" },
   { name:"trope4", symbol:"12A", default:[0, 11, 12, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
   { name:"trope5", symbol:"12A", default:[0, 4, 12, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
   { name:"trope6", symbol:"12A", default:[0, 12, 12, 10, 10, 10, 10, 0, 0, 0, 0], desc:"" },
@@ -55,22 +57,44 @@ exports.newStateObject = function() {
 	return state;
 }
 
-exports.saveState = function(res, state) {
+exports.saveState = async function(res, state) {
 	for(var i of [1,2,3,4,5,"Opponent"]) {
 		if(state["trope"+i]) { state["trope"+i] = tropes.serializeTrope(state["trope"+i]); }
 	}
-	
-	state.scene = state.scene.id || state.scene;
-	
-	states[state.id] = state;
-	
-	if(res) {
-	    res.cookie('id', state.id, { maxAge: 90000000000, httpOnly: true });
+
+	console.log("saving", state);
+
+	if(typeof state.scene == "object") {
+		state.scene = state.scene.id;
 	}
+
+	const client = createClient();
+	client.on('error', err => console.log('Redis Client Error', err));
+
+	await client.connect();
+	//states[state.id] = state;
+	await client.set(state.id, JSON.stringify(state));
+
+	if(res) {
+		try {
+			res.cookie('id', state.id, { maxAge: 90000000000, httpOnly: true, sameSite: 'none', secure: true });
+		} catch(e) {}
+	}
+
+	await client.disconnect();
 }
 
-exports.createStateObjectFromID = function(id) {
-	var state = states[id] || exports.newStateObject();
+exports.createStateObjectFromID = async function(id) {
+	const client = createClient();
+	client.on('error', err => console.log('Redis Client Error', err));
+
+	await client.connect()
+        if(id) {
+		var state = JSON.parse(await client.get(id));
+	} else {
+		var state = exports.newStateObject();
+	}
 	state.scene = scenes.find(state.scene);
+	await client.disconnect();
 	return state;
 }
