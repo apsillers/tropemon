@@ -36,7 +36,7 @@ exports.render = function(req, ctx, canvas) {
 	}
 }
 
-exports.process = function(input, req) {
+exports.process = async function(input, req) {
 	var scenes = require("./scenes.js");
 	
 	if(req.state.dialogPos == 0) {
@@ -97,8 +97,12 @@ exports.process = function(input, req) {
 			return;
 		}
 		if(input == "b") {
+                        // zero out previous character and decrease dialogPos to get ready to fill it in again
 			req.state.cursorPos = [0b11, 0b11, 0b11000011, 0b11110011][req.state.dialogPos - 2] & req.state.cursorPos;
 			req.state.dialogPos--;
+
+			// if we've already deleted all digits and hit B, go back to multiplayer top
+			if(req.state.dialogPos == 1) { req.state.dialogPos = 0; }
 			return;
 		}
 		return;
@@ -115,7 +119,7 @@ exports.process = function(input, req) {
 				return;
 			}
 			
-			var opState = stateHelper.createStateObjectFromID(opId);
+			var opState = await stateHelper.createStateObjectFromID(opId);
 			
 			utils.setFirstActiveTrope(req);
 			utils.setFirstActiveTrope({ state: opState });
@@ -123,15 +127,19 @@ exports.process = function(input, req) {
 			utils.setupCombat(req, opState["trope"+opState.whichTropeActive], opId);
 			utils.setupCombat({ state: opState }, req.state["trope"+req.state.whichTropeActive], req.state.id);
 			
-			stateHelper.saveState(null, opState);
+			await stateHelper.saveState(null, opState);
 			
 			// if our opponent has an active image stream, render to a new canvas and push it to their stream
 			// (otherwise, if their not online, things will just render whenever they return and start a new stream)
 			if(utils.videoStreams[opState.id]) {
 				var [opCanvas, opCtx] = utils.getCanvasAndCtx();
-				scenes.find(opState.scene).render({ state: opState }, opCtx, opCanvas);
+				await scenes.find(opState.scene).render({ state: opState }, opCtx, opCanvas);
 				utils.pushNewFrame(utils.videoStreams[opState.id], opCanvas);
 			}
+
+			await stateHelper.saveState(null, opState);
+console.log("we just joined!", req.state);
+
 		}
 		if(input == "b") {
 			req.state.dialogPos--;

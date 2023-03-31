@@ -1,7 +1,7 @@
 const { createCanvas } = require("canvas");
 
 exports.videoStreams = {};
-exports.homeURL = "http://localhost:8080";
+exports.homeURL = "https://archiveofourown.org/works/45988723#game";
 
 exports.pushNewFrame = function (res, canvas) {
 	var outBuffer = canvas.toBuffer("image/jpeg", { quality: 0.45 });
@@ -87,7 +87,7 @@ exports.setFirstActiveTrope = function(req) {
 exports.setupCombat = function(req, opponent, opId) {
 	var scenes = require("./scenes.js");
 	req.state.tropeOpponent = opponent;
-	req.state.scene = scenes.BATTLE_TOP;
+	req.state.scene = scenes.BATTLE_TOP.id;
 	req.state.dialogPos = 0;
 	req.state.cursorPos = 0;
 	req.state.opponentId = opId;

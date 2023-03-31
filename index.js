@@ -1,4 +1,5 @@
 const https = require("https");
+const http = require("http");
 const fs = require("fs");
 const cp = require("child_process");
 const express = require("express");
@@ -10,6 +11,12 @@ const utils = require("./utils.js");
 const stateHelper = require("./state.js");
 
 registerFont("./NotoEmoji-Regular.ttf", { family: "Noto Emoji",  weight: 'normal', style: 'normal' });
+registerFont("./CourierPrime-Bold.ttf", { family: "Courier",  weight: 'bold', style: 'normal' });
+
+var options = {
+  key: fs.readFileSync('../stack/letsencrypt/certificates/tropemon.com.key'),
+  cert: fs.readFileSync('../stack/letsencrypt/certificates/tropemon.com.crt')
+};
 
 const app = express();
 app.use(cookieParser());
@@ -17,11 +24,11 @@ app.use(cookieParser());
 app.use(express.static('public'))
 
 // read or initialize the state cookie
-app.use(function (req, res, next) {
+app.use(async function (req, res, next) {
     var id = req.cookies.id;
 	//console.log("id is", id);
-    req.state = stateHelper.createStateObjectFromID(id);
-	stateHelper.saveState(res, req.state);
+    req.state = await stateHelper.createStateObjectFromID(id);
+	await stateHelper.saveState(res, req.state);
 	//console.log("state is ", req.state);
     next();
 });
@@ -35,28 +42,28 @@ var pushNewFrame = utils.pushNewFrame;
 var dims = [160, 144];
 
 // whenever the user asks for the /screen...
-app.get("/screen", function(req, res) {
+app.get("/screen", async function(req, res) {
 	const scenes = require("./scenes.js");
 	videoStreams[req.state.id] = res;
 
-    var [canvas, ctx] = utils.getCanvasAndCtx();
+	var [canvas, ctx] = utils.getCanvasAndCtx();
 
     res.writeHead(200, {
         'Cache-Control': 'no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0',
         Pragma: 'no-cache',
-        Connection: 'keep-alive',
+        Connection: 'close',
 
         'Content-Type': 'multipart/x-mixed-replace; boundary=--endofsection'
     });
 	
 	utils.displayBoxText(ctx, "This might not work in your browser...");
-    res.write(`Content-Type:image/jpeg\n\n`);
+	res.write(`Content-Type:image/jpeg\n\n`);
 	res.write(canvas.toBuffer("image/jpeg", { quality: 0.1 }));
 	res.write(`--endofsection\n`);
 	ctx.fillStyle = "white";
     ctx.fillRect(0, 0, dims[0], dims[1]);
 	
-	scenes.find(req.state.scene).render(req, ctx, canvas);
+	await scenes.find(req.state.scene).render(req, ctx, canvas);
 	
 	// debug
 	//ctx.fillStyle = "black";
@@ -75,31 +82,31 @@ app.get("/screen", function(req, res) {
     });
 });
 
-app.get(["/d","/u","/r","/l","/a","/b"], function controlInput(req, res) {
+app.get(["/d","/u","/r","/l","/a","/b"], async function controlInput(req, res) {
 	const scenes = require("./scenes.js");
 	var screenRes = videoStreams[req.state.id];
 	var [canvas, ctx] = utils.getCanvasAndCtx();
 
 	var controlMap = { "/d":"down", "/u":"up", "/r":"right", "/l":"left", "/a":"a", "/b":"b" };
 
-	scenes.find(req.state.scene).process(controlMap[req.originalUrl], req, ctx);
+	await scenes.find(req.state.scene).process(controlMap[req.originalUrl], req, ctx);
 	
 	if(!screenRes) { res.redirect(utils.homeURL); }
 	
-	scenes.find(req.state.scene).render(req, ctx, canvas);
-	stateHelper.saveState(res, req.state);
+	await scenes.find(req.state.scene).render(req, ctx, canvas);
+	await stateHelper.saveState(res, req.state);
 
 	// debug
 	//ctx.fillStyle = "black";
 	//ctx.font = "12pt courier";
 	//ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
 	
-	pushNewFrame(screenRes, canvas);
+	if(screenRes) { pushNewFrame(screenRes, canvas); }
 	
 	res.status(204).end();
 });
 
-app.get("/escapeHatch", function controlInput(req, res) {
+app.get("/escapeHatch", async function controlInput(req, res) {
 	const scenes = require("./scenes.js");
 	
 	if(scenes.find(req.state.scene) == scenes.INTRO) {
@@ -110,13 +117,14 @@ app.get("/escapeHatch", function controlInput(req, res) {
 	req.state.cursorPos = 0;
 	req.state.dialogPos = 0;
 	
-	stateHelper.saveState(res, req.state);
+	await stateHelper.saveState(res, req.state);
 	
 	res.redirect(utils.homeURL);
 });
 	
 
-app.listen(8080);
+https.createServer(options, app).listen(3000);
+//http.createServer(options, app).listen(3000);
 
 
 function backupState() {
