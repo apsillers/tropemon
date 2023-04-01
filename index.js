@@ -56,7 +56,7 @@ app.get("/screen", async function(req, res) {
         'Content-Type': 'multipart/x-mixed-replace; boundary=--endofsection'
     });
 	
-	utils.displayBoxText(ctx, "This might not work in your browser...");
+	utils.displayBoxText(ctx, "");
 	res.write(`Content-Type:image/jpeg\n\n`);
 	res.write(canvas.toBuffer("image/jpeg", { quality: 0.1 }));
 	res.write(`--endofsection\n`);
@@ -75,6 +75,10 @@ app.get("/screen", async function(req, res) {
 
     pushNewFrame(res, canvas);
 
+	if(req.headers['user-agent'].match(/Firefox/)) {
+		res.end();
+	}
+
     // when the HTTP client disconnnects, remove its screen stream
     res.on("close", _=>{
 		console.log("closed");
@@ -90,33 +94,45 @@ app.get(["/d","/u","/r","/l","/a","/b"], async function controlInput(req, res) {
 	var controlMap = { "/d":"down", "/u":"up", "/r":"right", "/l":"left", "/a":"a", "/b":"b" };
 
 	await scenes.find(req.state.scene).process(controlMap[req.originalUrl], req, ctx);
-	
-	if(!screenRes) { res.redirect(utils.homeURL); }
-	
+
+	// Firefox kills the image feed upon getting any 204 (even a separate request!)
+	// so we have to use a redirect-and-reload approach
+	if(!screenRes || req.headers['user-agent'].match(/Firefox/)) {
+		await stateHelper.saveState(res, req.state);
+		res.redirect(utils.homeURL);
+		return;
+	}
+
+
 	await scenes.find(req.state.scene).render(req, ctx, canvas);
 	await stateHelper.saveState(res, req.state);
+
 
 	// debug
 	//ctx.fillStyle = "black";
 	//ctx.font = "12pt courier";
 	//ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
-	
+
 	if(screenRes) { pushNewFrame(screenRes, canvas); }
-	
+
 	res.status(204).end();
 });
 
 app.get("/escapeHatch", async function controlInput(req, res) {
 	const scenes = require("./scenes.js");
-	
+
 	if(scenes.find(req.state.scene) == scenes.INTRO) {
 	    res.redirect(utils.homeURL);
     }
-	
+
 	req.state.scene = scenes.MENU;
 	req.state.cursorPos = 0;
 	req.state.dialogPos = 0;
-	
+	req.opponentId = "";
+	req.tropeOpponent = [0];
+	req.opponenetMove = 99;
+	req.opponentNextMove = 99;
+
 	await stateHelper.saveState(res, req.state);
 	
 	res.redirect(utils.homeURL);

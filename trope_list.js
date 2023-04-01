@@ -108,7 +108,7 @@ exports.process = function(input, req) {
 	}
 	
 	// choosing trope to permanently replace
-	if(req.state.dialogPos == 2) {
+	if(req.state.dialogPos == 2 || req.state.dialogPos == 3) {
 		if(input == "a") {
 			if(req.state.cursorPos == 0) { req.state.cursorPos = 1; return; }
 			
@@ -118,6 +118,7 @@ exports.process = function(input, req) {
 			// progress to AFTER_BATTLE
 			req.state.scene = scenes.AFTER_BATTLE;
 			req.state.dialogPos = 0;
+			return;
 		}
 		if(input == "b") {
 			req.state.scene = scenes.AFTER_BATTLE;

@@ -1,5 +1,6 @@
 var utils = require("./utils.js");
 var tropes = require("./tropes.js");
+var moves = require("./moves.json");
 
 exports.id = 101;
 
@@ -70,13 +71,14 @@ exports.process = function(input, req) {
 				req.state.cursorPos = 0;
 			}
 			if(req.state.cursorPos == 3) {
+				// heal
 				req.state.dialogPos = 3;
 				for(var i=1; i<=6; i++) {
 					var trope = tropes.tropeFromState(req.state["trope" + i]);
 					if(!trope) { break; }
 					trope.hp = trope.maxHP;
 					for(var j=0; j<trope.learnedMoves.length; j++) {
-						trope["pp"+(j+1)] = trope.learnedMoves[j].pp;
+						trope["pp"+(j+1)] = moves.find(m=>m.name == trope.learnedMoves[j]).pp;
 					}
 					req.state["trope"+i] = trope;
 				}

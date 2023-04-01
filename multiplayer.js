@@ -9,10 +9,12 @@ var battleIdsByPlayer = {};
 
 exports.render = function(req, ctx, canvas) {
 	if(req.state.dialogPos == 0) {
-	    var topDialog = "  HOST                   JOIN";
-	    utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,23][req.state.cursorPos]}}).`), ">"));
+		var topDialog = "  HOST                   JOIN";
+		utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,23][req.state.cursorPos]}}).`), ">"));
+		ctx.font = "40px Noto Emoji";
+		ctx.fillText("💻🔄💻", 5, 65);
 	}
-    if(req.state.dialogPos == 1) {
+	if(req.state.dialogPos == 1) {
 		if(battleIdsByPlayer[req.state.id]) {
 		    utils.displayBoxText(ctx, "Battle code is " + battleIdsByPlayer[req.state.id] + ". Have another player join, or B to cancel.");
 			ctx.font = "bold 20px courier";

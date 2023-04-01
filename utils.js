@@ -48,6 +48,20 @@ exports.oneToNPos = function(n, input, req) {
 	if(input == "up" && req.state.cursorPos > 1) { req.state.cursorPos -= 1; }
 }
 
+exports.displayPP = function(ctx, pp, maxPP) {
+    ctx.beginPath();
+    ctx.fillStyle = "#fff";
+	ctx.lineWidth = 2;
+    ctx.rect(90, 83, 67, 17);
+    ctx.stroke();
+    ctx.fill();
+    ctx.closePath();
+
+    ctx.fillStyle = "#000";
+    ctx.font = "bold 12px courier";
+    ctx.fillText("PP: " + pp + "/" + maxPP, 94, 96);
+}
+
 exports.displayBoxText = function(ctx, text) {
     ctx.beginPath();
     ctx.fillStyle = "#fff";

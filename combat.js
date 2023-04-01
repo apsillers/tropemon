@@ -58,6 +58,11 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 	    exports.drawCombat(req, ctx);
 	    var attacksDialog = ` ${myTrope.learnedMoves[0].toUpperCase().padEnd(10)} ${(myTrope.learnedMoves[1]||"").toUpperCase().padEnd(10)}  ${(myTrope.learnedMoves[2]||"").toUpperCase().padEnd(10)} ${(myTrope.learnedMoves[3]||"").toUpperCase().padEnd(10)}`  ;
 	    utils.displayBoxText(ctx, attacksDialog.replace(new RegExp(`(?<=.{${[0,11,23,34][req.state.cursorPos]}}).`), ">"));
+		var moveStats =  moves.find(m=>m.name == myTrope.learnedMoves[req.state.cursorPos]);
+		if(moveStats) {
+			console.log(myTrope["pp"+(req.state.cursorPos+1)], moveStats);
+			utils.displayPP(ctx, myTrope["pp"+(req.state.cursorPos+1)], moveStats.pp);
+		}
 	} else {
 		// if we are beginning a new combat sequence from the top
 		if(req.state.dialogPos == 1) {
@@ -256,9 +261,56 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 					effect.self.hp = Math.min(effect.self.hp + effect.heal[0] + effect.heal[1] * effect.self.level, effect.self.maxHP);
 					effect.self.xp += 9;
 				}
+				if("healAll" in effect) {
+					if(effect.self == myTrope) {
+						console.log("myTrope healing all");
+						for(var i=1; i<=6; i++) {
+							var iTrope = tropes.tropeFromState(req.state["trope"+i]);
+							console.log("healing ", i);
+							if(iTrope && iTrope.hp != 0) {
+								console.log("hp:", iTrope.hp)
+								iTrope.hp =  Math.min(iTrope.hp + effect.healAll[0] + effect.healAll[1] * effect.self.level, iTrope.maxHP);
+								console.log("hp after:", iTrope.hp)
+								req.state["trope"+i] = iTrope;
+							}
+						}
+					} else {
+						// if this is enemy trope, only heal self, no need for us to account for their teammates
+						effect.self.hp = Math.min(effect.self.hp + effect.healAll[0] + effect.healAll[1] * effect.self.level, effect.self.maxHP);
+					}
+					effect.self.xp += 9;
+				}
+				if("resurrect" in effect) {
+					if(effect.self == myTrope) {
+						var deadTropesIdx = [];
+						for(var i=1; i<=6; i++) {
+							var iTrope = tropes.tropeFromState(req.state["trope"+i]);
+							if(iTrope && iTrope.hp == 0) {
+								deadTropesIdx.push(i);
+							}
+						}
+						var targetIdx = deadTropes[Math.floor(Math.random()*deadTropesIdx.length)];
+                                                var target = tropes.tropeFromState(req.state["trope"+target]);
+						target.hp = Math.floor(target.maxHP * 0.25);
+						req.state["trope"+targetIdx] = target;
+					}
+				}
 				if("attack" in effect) {
 					effect.target.attackMod += +effect.attack;
 					effect.self.xp += 9;
+				}
+				if("attackAll" in effect) {
+					if(effect.self == myTrope) {
+						for(var i=1; i<=6; i++) {
+							var iTrope = tropes.tropeFromState(req.state["trope"+i]);
+							if(iTrope && iTrope.hp != 0) {
+								iTrope.attackMod += +effect.attackAll;
+								req.state["trope"+i] = iTrope;
+							}
+						}
+					} else {
+						effect.self.attackMod += +effect.attackAll;
+					}
 				}
 				if("defense" in effect) {
 					effect.target.defenseMod += +effect.defense;
@@ -368,9 +420,11 @@ exports.processAttackInput = function(input, req) {
 		var opTrope = tropes.tropeFromState(req.state["tropeOpponent"]);
 	
 	    if(input == "a") {
-			if(myTrope.learnedMoves[req.state.cursorPos]) {
+			if(myTrope.learnedMoves[req.state.cursorPos] && myTrope["pp"+(req.state.cursorPos+1)] > 0) {
 				// dialogPos=1 signals to the renderer to begin showing the combat sequence
-    	        req.state.dialogPos = 1;
+				req.state.dialogPos = 1;
+				myTrope["pp"+(req.state.cursorPos+1)] -= 1;
+				req.state["trope" + req.state.whichTropeActive] = myTrope
 			}
 	    }
 		// b goes back to top
@@ -478,6 +532,8 @@ exports.processAfterBattleInput = function(input, req) {
 exports.drawAfterBattle = function(req, ctx) {
 	    if(req.state.dialogPos == 0) {
 			utils.displayBoxText(ctx, "Good hustle, everyone!");
+			ctx.font = "80px 'Noto Emoji'";
+	    		ctx.fillText('👍', 30, 80);
 			return;
 		}
 		var msg;
@@ -523,6 +579,9 @@ exports.processRun = function(input, req) {
 
 exports.drawRun = function(req, ctx) {
 	utils.displayBoxText(ctx, "All right, beat it, then! Get outta here!");
+	ctx.font = "80px 'Noto Emoji'";
+	ctx.fillText('🏃', 30, 80);
+
 }
 
 function nextLeveledTrope(req) {
