@@ -25,3 +25,12 @@ If you want to contribute, like, I guess?! The code is absoultely shameful becau
 ## Why?
 
 "Tropémon" rhymes with "Pokémon" and I thought it would be funny to have fanfiction tropes fight each other, within a fan work that is itself a parody of Pokemon.
+
+## License
+
+This work is licensed under the GNU Affero General Public License, version 3, or (at your option) any other future version of that license published by the Free Software Foundation. Practiaclly, this means:
+
+* you have permission to run a copy of this service yourself, and
+* you can host modified versions of this service if you share the source code of your modified service (also under AGPLv3+) with your users.
+
+I think this should be a pretty easy requirement to satisfy (just link to a copy of your code whenever you host a modified service!), but I'm open to different licensing terms, if you have a compelling reason why the AGPLv3+ is particularly onerous for whatever you have in mind. Feel free to open an issue to explain!
