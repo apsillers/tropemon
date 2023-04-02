@@ -6,8 +6,11 @@ exports.id = 101;
 
 exports.render = function (req, ctx) {
 	if(req.state.dialogPos == 0) {
-	    var topDialog = " NEW BATTLE   REORDER   MULTIPLAYER  HEAL";
-	    utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,13,23,36][req.state.cursorPos]}}).`), ">"));
+		var topDialog = " NEW BATTLE   REORDER   MULTIPLAYER  HEAL";
+		utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,13,23,36][req.state.cursorPos]}}).`), ">"));
+		ctx.font = "20px 'courier'";
+		ctx.fillText('TROPEMON!', 30, 80);
+
 	}
 	if(req.state.dialogPos == 1) {
 		var anyAlive = false;
@@ -22,13 +25,14 @@ exports.render = function (req, ctx) {
 			return;
 		}
 		var topDialog = " ANGST        FLUFF     SMUT         RANDOM";
-	    utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,13,23,36][req.state.cursorPos]}}).`), ">"));
+
+		utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,13,23,36][req.state.cursorPos]}}).`), ">"));
 	}
 	
 	if(req.state.dialogPos == 3) {
 		utils.displayBoxText(ctx, "Our betas have patched your tropes all up, good as new!");
 		ctx.font = "80px 'Noto-Emoji'";
-	    ctx.fillText('👩‍⚕️', 30, 80);
+		ctx.fillText('👩‍⚕️', 30, 80);
 		ctx.font = "30px 'Noto-Emoji'";
 		ctx.fillText('❤️', 15, 65);
 		ctx.fillText('❤️', 110, 55);

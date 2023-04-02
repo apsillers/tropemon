@@ -24,8 +24,8 @@ var tropes = [
   { "num":14, "name":"Lemon", "emoji":"🍋", "moves":[["Lick",1], ["Harden", 1], ["Stamina", 3], ["Orgy", 6]], "baseHP":15, "hpLvl":7, "type":"S", "evolve":[15,5] },
   { "num":15, "name":"PWP", "emoji":"🍆", "moves":[["Lick",1], ["Harden", 1], ["Stamina", 3], ["Orgy", 6]], "baseHP":15, "hpLvl":7, "type":"S", "minlevel":5 },
 
-  { "num":16, "name":"Malewife", "emoji":"👰‍♂️", "moves":[["Pancakes",1], ["Cozy Up", 1], ["Bad Idea", 6], ["Oops", 8]], "baseHP":25, "hpLvl":7, "type":"F", "evolves":[17,5] },
-  { "num":17, "name":"Himbo", "emoji":"🧑‍🍳", "moves":[["Pancakes",1], ["Cozy Up", 1], ["Bad Idea", 6], ["Oops", 8]], "baseHP":35, "hpLvl":7, "type":"F", "minLevel":5 },
+  { "num":16, "name":"Malewife", "emoji":"👰‍♂️", "moves":[["Pancakes",1], ["Cozy Up", 1], ["Bad Idea", 6], ["Oops", 8]], "baseHP":15, "hpLvl":6, "type":"F", "evolves":[17,5] },
+  { "num":17, "name":"Himbo", "emoji":"🧑‍🍳", "moves":[["Pancakes",1], ["Cozy Up", 1], ["Bad Idea", 6], ["Oops", 8]], "baseHP":30, "hpLvl":6, "type":"F", "minLevel":5 },
 
   { "num":18, "name":"Bad Boy", "emoji":"😎", "moves":[["Spite",1], ["Sneer", 1], ["Brood", 3], ["Smash", 6]], "baseHP":20, "hpLvl":7, "type":"A", "evolves":[19,5] },
   { "num":19, "name":"BAMF", "emoji":"🏂", "moves":[["Spite",1], ["Sneer", 1], ["Brood", 3], ["Smash", 6]], "baseHP":30, "hpLvl":8, "type":"A", "minlevel":5 },

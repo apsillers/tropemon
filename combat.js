@@ -245,6 +245,9 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 			// apply effect
 			if(effect) {
 				if("damage" in effect || "drain" in effect) {
+					if("drain" in effect) {
+						effect.damage = effect.drain;
+					}
 					var damage = Math.max(1, effect.damage[0] + effect.damage[1]*effect.self.level + effect.self.attackMod - effect.target.defenseMod);
 					if(isEffective(effect.type, effect.target)) { damage = Math.ceil(damage * 1.2); }
 					if(isNotEffective(effect.type, effect.target)) { damage = Math.ceil(damage * 0.8); }
@@ -252,14 +255,15 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 					if("drain" in effect) {
 						var gain = Math.min(damage, effect.target.hp);
 						effect.self.hp = Math.min(effect.self.hp + gain, effect.self.maxHP);
+						delete effect.drain;
 					}
 					effect.target.hp -= damage;
 					effect.target.hp = Math.max(0, effect.target.hp);
-					effect.self.xp += 14;
+					effect.self.xp += 14 + effect.target.level * 2;
 				}
 				if("heal" in effect) {
 					effect.self.hp = Math.min(effect.self.hp + effect.heal[0] + effect.heal[1] * effect.self.level, effect.self.maxHP);
-					effect.self.xp += 9;
+					effect.self.xp += 9 + effect.target.level * 2;
 				}
 				if("healAll" in effect) {
 					if(effect.self == myTrope) {
@@ -278,7 +282,7 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 						// if this is enemy trope, only heal self, no need for us to account for their teammates
 						effect.self.hp = Math.min(effect.self.hp + effect.healAll[0] + effect.healAll[1] * effect.self.level, effect.self.maxHP);
 					}
-					effect.self.xp += 9;
+					effect.self.xp += 9 + effect.target.level * 2;
 				}
 				if("resurrect" in effect) {
 					if(effect.self == myTrope) {
@@ -289,15 +293,15 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 								deadTropesIdx.push(i);
 							}
 						}
-						var targetIdx = deadTropes[Math.floor(Math.random()*deadTropesIdx.length)];
-                                                var target = tropes.tropeFromState(req.state["trope"+target]);
+						var targetIdx = deadTropesIdx[Math.floor(Math.random()*deadTropesIdx.length)];
+                                                var target = tropes.tropeFromState(req.state["trope"+targetIdx]);
 						target.hp = Math.floor(target.maxHP * 0.25);
 						req.state["trope"+targetIdx] = target;
 					}
 				}
 				if("attack" in effect) {
 					effect.target.attackMod += +effect.attack;
-					effect.self.xp += 9;
+					effect.self.xp += 9 + effect.target.level * 2;
 				}
 				if("attackAll" in effect) {
 					if(effect.self == myTrope) {
@@ -311,18 +315,19 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 					} else {
 						effect.self.attackMod += +effect.attackAll;
 					}
+					effect.self.xp += 9 + effect.target.level * 2;
 				}
 				if("defense" in effect) {
 					effect.target.defenseMod += +effect.defense;
-					effect.self.xp += 9;
+					effect.self.xp += 9 + effect.target.level * 2;
 				}
 				if("defenseSelf" in effect) {
 					effect.self.defenseMod += +effect.defenseSelf;
-					effect.self.xp += 9;
+					effect.self.xp += 9 + effect.target.level * 2;
 				}
 				if("attackSelf" in effect) {
 					effect.self.attackMod += +effect.attackSelf;
-					effect.self.xp += 9;
+					effect.self.xp += 9 + effect.target.level * 2;
 				}
 				if("caught" in effect) {
 					var freeSlot = false;
@@ -347,9 +352,12 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 				}
 				if("switchTo" in effect) {
 					// if this is you
+					console.log(req.state.id, "switching", effect);
+					console.log(req.state.id, "myTrope:", myTrope);
 					if(effect.self == myTrope) {
+						console.log("self swap");
 						// give xp for hangin in there last round, and make sure it saves its state
-						myTrope.xp += 14;
+						myTrope.xp += 14 + effect.target.level * 2;
 						req.state["trope" + req.state.whichTropeActive] = myTrope;
 						
 						req.state.whichTropeActive = effect.switchTo;
@@ -358,6 +366,7 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 						newTrope.xp += 14;
 						req.state["trope" + req.state.whichTropeActive] = newTrope;
 					} else {
+						console.log("opponent swap");
 						// only multiplayer opponents can switch, so we know opState exists
 						// show who they're switching to
 						req.state["tropeOpponent"] = tropes.tropeFromState(opState["trope" + effect.switchTo]);
@@ -656,12 +665,13 @@ function speedSortMovesAndTropes(move1, move2, trope1, trope2, id1, id2) {
 	if(move2 == "CATCH") { return [move2, move1, trope2, trope1]; }
 	
 	// always do switches first before a non-switch other move
-	if(move1.startsWith("SWITCH") && !move2.startsWith("SWITCH")) {
+	if(move1.startsWith("SWITCH")) {
 		return [move1, move2, trope1, trope2];
 	}
 	if(move2.startsWith("SWITCH") && !move1.startsWith("SWITCH")) {
 		return [move2, move1, trope2, trope1];
 	}
+
 	
 	// fluff is fastest, angst is slowest, so any non-same type combos
 	// with an F or an A must resolve in F's favor and A's disfavor
