@@ -20,7 +20,7 @@ The creation of multiple states (one per user) is accomplished by assigning a un
 
 I'm Andrew Sillers, the guy who also hosts [the video game Doom on AO3](https://archiveofourown.org/works/31295183).
 
-If you want to contribute, like, I guess?! The code is absoultely shameful because I coded it in desparate, breakneck sprint in time for April Fools Day 2023.
+If you want to contribute, like, I guess?! The code is absoultely shameful because I coded it in a desparate, breakneck sprint in time for April Fools Day 2023.
 
 ## Why?
 
@@ -34,3 +34,5 @@ This work is licensed under the GNU Affero General Public License, version 3, or
 * you can host modified versions of this service if you share the source code of your modified service (also under AGPLv3+) with your users.
 
 I think this should be a pretty easy requirement to satisfy (just link to a copy of your code whenever you host a modified service!), but I'm open to different licensing terms, if you have a compelling reason why the AGPLv3+ is particularly onerous for whatever you have in mind. Feel free to open an issue to explain!
+
+The .ttf font files are not my authorship but are freely available under the SIL Open Font License, whose text is contained in `OFL.txt`.
