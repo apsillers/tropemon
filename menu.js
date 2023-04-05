@@ -115,8 +115,13 @@ exports.process = function(input, req) {
 				averageLevel += trope.level;
 			}
 			averageLevel /= i-1;
-			var opponentLevel = Math.floor(Math.random()*5+averageLevel);
-			
+
+			// if you have 2 or fewer tropes, match average; otherwise, beef em up a lil
+			if(i <= 3) {
+				var opponentLevel = Math.floor(averageLevel);
+			} else {
+				var opponentLevel = Math.floor(Math.random()*3+averageLevel);
+			}
 			// random battle
 			if(req.state.cursorPos < 3) {
 				var trope = tropes.randomTrope(opponentLevel, t=>t.type=="AFS"[req.state.cursorPos])
