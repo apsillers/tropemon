@@ -1,11 +1,8 @@
 {
   "dependencies": {
-    "atob": "^2.1.2",
-    "btoa": "^1.2.1",
     "canvas": "^2.11.0",
     "cookie-parser": "^1.4.6",
     "express": "^4.18.2",
-    "jspack": "^0.0.4",
     "redis": "^4.6.5"
   }
 }
