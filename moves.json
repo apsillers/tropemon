@@ -4,7 +4,7 @@
   { "name": "Comfort", "msg":[["ATTACKER feels a little better!", {"heal":[5,2]}], ["ATTACKER's defense rose!", {"defenseSelf":1}]], "type":"F", "pp":30},
   { "name": "Bare Soul", "msg":[["ATTACKER blasts DEFENDER with personal truth!", {"damage":[8,2]}], ["ATTACKER's own defense fell from all the vulnerability!", {"defenseSelf":-2}]], "type":"F", "pp":5},
 
-  { "name": "Tackle", "msg":[["ATTACKER tackles DEFENDER!", {"damage":[6,1]}]], "type":"A", "pp":30},
+  { "name": "Tackle", "msg":[["ATTACKER tackles DEFENDER!", {"damage":[5,1]}]], "type":"A", "pp":30},
   { "name": "Weep", "msg":[["ATTACKER just starts crying!"], ["DEFENDER's attack fell!",{"attack":-2}]], "type":"A", "pp":30},
   { "name": "Bemoan", "msg":[["ATTACKER lays down crushing emotion!", {"damage":[10,1]}]], "type":"A", "pp":5},
   { "name": "Fury", "msg":[["ATTACKER asks who did this to you!?", {"damage":[8,1]}], ["ATTACKER's attack rose!", {"attackSelf":2}]], "type":"A", "pp":5},
@@ -28,13 +28,13 @@
   { "name": "Bad Idea", "msg":[["ATTACKER tells about its new dumb idea!"], ["DEFENDER hurt itself explaining how dumb that is!",{"damage":[7,1]}]], "type":"F", "pp":10},
   { "name": "Oops", "msg":[["ATTACKER doesn't know its own strength!",{"damage":[10,1]}],  ["ATTACKER is trying to be careful! Its attack fell!", {"attackSelf":-3}]], "type":"F", "pp":5},
 
-  { "name": "PDA", "msg":[["ATTACKER are so cute it actually hurts!",{"damage":[6,2] }]], "type":"F", "pp":20},
+  { "name": "PDA", "msg":[["ATTACKER are so cute it actually hurts!",{"damage":[6,1] }]], "type":"F", "pp":20},
   { "name": "Coat Swap", "msg":[["ATTACKER swaps coats with each other!"], ["It's really cute, and ATTACKER's defense rose!",{"defenseSelf":2}]], "type":"F", "pp":20},
-  { "name": "Body Swap", "msg":[["ATTACKER and DEFENDER swap bodies for a minute!"], ["ATTACKER feels strangely refreshed!", {"heal":[3,1]}], ["DEFENDER hurt itself in its confusion!",{"damage":[3,1]}]], "type":"F", "pp":20},
+  { "name": "Body Swap", "msg":[["ATTACKER and DEFENDER swap bodies for a minute!"], ["ATTACKER feels strangely refreshed!", {"heal":[0,1]}], ["DEFENDER hurt itself in its confusion!",{"damage":[3,1]}]], "type":"F", "pp":20},
 
-  { "name": "Whump", "msg":[["ATTACKER used WHUMP! D: D: D:",{"damage":[10,3]}]], "type":"A", "pp":5},
-  { "name": "Despair", "msg":[["DEFENDER gets seriously bummed out!"], ["DEFENDER's attack and defense fell", {"defense":-2, "attack":-2 }]], "type":"A", "pp":5},
-  { "name": "MCD", "msg":[["ATTACKER used Major Character Death!!!",{"damage":[500,3]}]], "type":"A", "pp":1},
+  { "name": "Whump", "msg":[["ATTACKER used WHUMP! D: D: D:",{"damage":[10,2]}]], "type":"A", "pp":5},
+  { "name": "Despair", "msg":[["DEFENDER gets seriously bummed out!"], ["DEFENDER's attack and defense fell", {"defense":-2, "attack":-1 }]], "type":"A", "pp":5},
+  { "name": "MCD", "msg":[["ATTACKER used Major Character Death!!!",{"damage":[1000,3]}]], "type":"A", "pp":1},
 
   { "name": "Soul Bond", "msg":[["ATTACKER soul bonds with DEFENDER!"], ["ATTACKER's defense fell!", {"defenseSelf":-2}], ["DEFENDER's defense fell even more!", {"defense":-5}]], "type":"S", "pp":30},
   { "name": "Growl", "msg":[["Growl, growl! DEFENDER's defense fell!", {"defense":-2}]], "type":"S", "pp":20},
@@ -44,9 +44,9 @@
   { "name": "Lick", "msg":[["ATTACKER licked DEFENDER! Yuck!",{"damage":[2,2]}], ["It's weird but DEFENDER kinda liked it!"]], "type":"S", "pp":8},
   { "name": "Stamina", "msg":[["ATTACKER takes a break and paces itself!", {"heal":[8,2]}], ["ATTACKER's HP and attack rose!", {"attackSelf":1}]], "type":"F", "pp":30},
 
-  { "name": "Spite", "msg":[["ATTACKER dishes out SPITE!",{"damage":[7,2]}]], "type":"A", "pp":10},
-  { "name": "Sneer", "msg":[["ATTACKER sneers! DEFENDER's attack fell!",{"attack":-3}]], "type":"A", "pp":30},
-  { "name": "Brood", "msg":[["ATTACKER broods heavily!"], ["Its attack and defense rose!",{"attackSelf":2, "defenseSelf":2}]], "type":"A", "pp":30},
-  { "name": "Smash", "msg":[["ATTACKER smashes into DEFENDER!",{"damage":[10,2]}], ["DEFENDER's defense fell!", {"defense":-1}]], "type":"A", "pp":5}
+  { "name": "Spite", "msg":[["ATTACKER dishes out SPITE!",{"damage":[7,1]}]], "type":"A", "pp":10},
+  { "name": "Sneer", "msg":[["ATTACKER sneers! DEFENDER's attack fell!",{"attack":-2}]], "type":"A", "pp":30},
+  { "name": "Brood", "msg":[["ATTACKER broods heavily!"], ["Its attack and defense rose!",{"attackSelf":1, "defenseSelf":2}]], "type":"A", "pp":30},
+  { "name": "Smash", "msg":[["ATTACKER smashes into DEFENDER!",{"damage":[6,2]}], ["DEFENDER's defense fell!", {"defense":-1}]], "type":"A", "pp":5}
 
 ]

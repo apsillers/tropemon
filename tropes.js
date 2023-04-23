@@ -27,25 +27,25 @@ var tropes = [
   { "num":6, "name":"Explicit", "emoji":"😈", "moves": [["Gyrate", 1], ["Flirt", 1], ["Smolder", 3], ["Ooh La La",5]], "baseHP":20, "hpLvl":5, "type":"S", "minLevel":4 },
 
   { "num":7, "name":"Rarepair", "emoji":"💏", "moves":[["PDA",1], ["Coat Swap", 1], ["Puppy Eyes", 3], ["Body Swap", 6]], "baseHP":15, "hpLvl":7, "evolve":[8,5], "type":"F" },
-  { "num":8, "name":"Crackship", "emoji":"👯‍♂️", "moves":[["PDA",1], ["Coat Swap", 1], ["Puppy Eyes", 3], ["Body Swap", 6]], "baseHP":15, "hpLvl":7, "type":"F", "minlevel":5 },
+  { "num":8, "name":"Crackship", "emoji":"👯‍♂️", "moves":[["PDA",1], ["Coat Swap", 1], ["Puppy Eyes", 3], ["Body Swap", 6]], "baseHP":15, "hpLvl":7, "type":"F", "minLevel":5 },
 
-  { "num":9, "name":"Dead Dove", "emoji":"🐦", "moves":[["Whump",1], ["Despair", 1], ["Bemoan", 3], ["MCD", 6]], "baseHP":12, "hpLvl":7, "type":"A" },
+  { "num":9, "name":"Dead Dove", "emoji":"🐦", "moves":[["Whump",1], ["Despair", 1], ["Bemoan", 3], ["MCD", 6]], "baseHP":12, "hpLvl":7, "type":"A", "minLevel":7 },
 
-  { "num":10, "name":"Hotpants", "emoji":"👖", "moves":[["Thrust",1], ["Harden", 1], ["Sling", 3], ["Suck", 6]], "baseHP":15, "hpLvl":5, "type":"S" },
+  { "num":10, "name":"Hotpants", "emoji":"👖", "moves":[["Thrust",1], ["Harden", 1], ["Sling", 3], ["Suck", 6]], "baseHP":15, "hpLvl":5, "type":"S", "minLevel":7 },
 
-  { "num":11, "name":"Only One Bed", "emoji":"🛌", "moves":[["Cover Up",1], ["Rest", 1], ["Smash", 3], ["Rezurgays", 6]], "baseHP":25, "hpLvl":7, "type":"F" },
+  { "num":11, "name":"Only One Bed", "emoji":"🛌", "moves":[["Cover Up",1], ["Rest", 1], ["Smash", 3], ["Rezurgays", 6]], "baseHP":25, "hpLvl":7, "type":"F", "minLevel":7 },
 
   { "num":12, "name":"Creature Fic", "emoji":"🧛", "moves":[["Tackle",1], ["Soul Bond", 1], ["Growl", 3], ["Knot", 6]], "baseHP":15, "hpLvl":8, "type":"S", "evolve":[13,5] },
-  { "num":13, "name":"A/B/O", "emoji":"🐺", "moves":[["Tackle",1], ["Soul Bond", 1], ["Growl", 3], ["Knot", 6]], "baseHP":15, "hpLvl":8, "type":"S", "minlevel":5 },
+  { "num":13, "name":"A/B/O", "emoji":"🐺", "moves":[["Tackle",1], ["Soul Bond", 1], ["Growl", 3], ["Knot", 6]], "baseHP":15, "hpLvl":8, "type":"S", "minLevel":5 },
 
   { "num":14, "name":"Lemon", "emoji":"🍋", "moves":[["Lick",1], ["Harden", 1], ["Stamina", 3], ["Orgy", 6]], "baseHP":15, "hpLvl":7, "type":"S", "evolve":[15,5] },
-  { "num":15, "name":"PWP", "emoji":"🍆", "moves":[["Lick",1], ["Harden", 1], ["Stamina", 3], ["Orgy", 6]], "baseHP":15, "hpLvl":7, "type":"S", "minlevel":5 },
+  { "num":15, "name":"PWP", "emoji":"🍆", "moves":[["Lick",1], ["Harden", 1], ["Stamina", 3], ["Orgy", 6]], "baseHP":15, "hpLvl":7, "type":"S", "minLevel":5 },
 
   { "num":16, "name":"Malewife", "emoji":"👰‍♂️", "moves":[["Pancakes",1], ["Cozy Up", 1], ["Bad Idea", 6], ["Oops", 8]], "baseHP":15, "hpLvl":6, "type":"F", "evolves":[17,5] },
   { "num":17, "name":"Himbo", "emoji":"🧑‍🍳", "moves":[["Pancakes",1], ["Cozy Up", 1], ["Bad Idea", 6], ["Oops", 8]], "baseHP":30, "hpLvl":6, "type":"F", "minLevel":5 },
 
   { "num":18, "name":"Bad Boy", "emoji":"😎", "moves":[["Spite",1], ["Sneer", 1], ["Brood", 3], ["Smash", 6]], "baseHP":20, "hpLvl":7, "type":"A", "evolves":[19,5] },
-  { "num":19, "name":"BAMF", "emoji":"🏂", "moves":[["Spite",1], ["Sneer", 1], ["Brood", 3], ["Smash", 6]], "baseHP":30, "hpLvl":8, "type":"A", "minlevel":5 },
+  { "num":19, "name":"BAMF", "emoji":"🏂", "moves":[["Spite",1], ["Sneer", 1], ["Brood", 3], ["Smash", 6]], "baseHP":30, "hpLvl":8, "type":"A", "minLevel":5 },
 
 ];
 

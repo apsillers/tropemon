@@ -111,7 +111,7 @@ exports.setFirstActiveTrope = function(req) {
 	var tropes = require("./tropes.js")
 	for(var i=1; i<=6; i++) {
 		var trope = tropes.tropeFromState(req.state["trope" + i]);
-		if(trope.hp > 0) { req.state.whichTropeActive = i; break; }
+		if(trope && trope.hp > 0) { req.state.whichTropeActive = i; break; }
 	}
 }
 
