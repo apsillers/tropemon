@@ -144,9 +144,14 @@ exports.process = function(input, req) {
 }
 
 function drawHPBar(ctx, x, y, name, hp, max, xp, level) {
+	var ratio = hp / max;
+	var color = "#0c0";
+	if(ratio <= 0.5) { color = "#ca0"; }
+	if(ratio <= 0.25) { color = "#c00"; }
+	
     ctx.rect(x+1,y+1,70,3);
-    ctx.rect(x+2,y+2, 68 * hp / max, 1, "", "#0c0")
-    ctx.rect(x+1,y+6, 70 * Math.min((xp / (level * 100)), 1), 1, "", "#c0c")
+    ctx.rect(x+2,y+2, 68 * hp / max, 1, "", color);
+    ctx.rect(x+1,y+6, 70 * Math.min((xp / (level * 100)), 1), 1, "", "#c0c");
 
     ctx.fillText(name.padEnd(12) + ` HP ${hp}/${max}`, x, y-2, 10);
     ctx.fillText(`Lv${level}`, x+77, y+9, 10);

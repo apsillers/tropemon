@@ -636,8 +636,14 @@ function nextEvolvedTrope(req) {
 }
 
 function drawHPBar(ctx, x, y, name, hp, max, level) {
-    ctx.rect(x+1,y,70,3);
-    ctx.rect(x+1,y+1, 70 * hp / max, 1)
+    ctx.rect(x+1,y+1,70,3);
+	
+	var ratio = hp / max;
+	var color = "#0c0";
+	if(ratio <= 0.5) { color = "#ca0"; }
+	if(ratio <= 0.25) { color = "#c00"; }
+	
+    ctx.rect(x+2,y+2, 68 * ratio, 1, "", color);
 
     ctx.fillText(name, x, y-2);
     ctx.fillText(`${hp}/${max}`, x, y+14);
