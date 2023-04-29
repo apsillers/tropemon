@@ -28,14 +28,12 @@ exports.render = function(req, ctx, canvas) {
 	if(req.state.dialogPos == 0) {
 		var topDialog = "  HOST                   JOIN";
 		utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,23][req.state.cursorPos]}}).`), ">"));
-		ctx.font = "40px Noto Emoji";
-		ctx.fillText("💻🔄💻", 5, 65);
+		ctx.fillText("💻🔄💻", 5, 65, 37);
 	}
 	if(req.state.dialogPos == 1) {
 		if(battleIdsByPlayer[req.state.id]) {
 		    utils.displayBoxText(ctx, "Battle code is " + battleIdsByPlayer[req.state.id] + ". Have another player join, or B to cancel.");
-			ctx.font = "bold 20px courier";
-			ctx.fillText(battleIdsByPlayer[req.state.id], 10, 50);
+			ctx.fillText(battleIdsByPlayer[req.state.id], 10, 50, 20);
 		}
 	}
 	// join menu
@@ -43,15 +41,13 @@ exports.render = function(req, ctx, canvas) {
 	// and show entry options
 	if(req.state.dialogPos >= 2 && req.state.dialogPos <= 5) {
 		utils.displayBoxText(ctx, "Entering join code:     0  1  2  3            Press B to go back".replace(new RegExp(`(?<=.{${[23,26,29,32][req.state.cursorPos & 3]}}).`), ">"));
-		ctx.font = "bold 20px courier";
-		ctx.fillText(byteToCode(req.state.cursorPos).substr(0,req.state.dialogPos-2), 10, 50);
+		ctx.fillText(byteToCode(req.state.cursorPos).substr(0,req.state.dialogPos-2), 10, 50, 20);
 	}
 	// a dialog 6, code is fully entered
 	if(req.state.dialogPos == 6) {
 		// final selection
 		utils.displayBoxText(ctx, "A: Submit code         B: Go back");
-		ctx.font = "bold 20px courier";
-		ctx.fillText(byteToCode(req.state.cursorPos), 10, 50);
+		ctx.fillText(byteToCode(req.state.cursorPos), 10, 50, 20);
 	}
 }
 
@@ -69,7 +65,6 @@ exports.process = async function(input, req) {
 					var code = freeCodes.splice(Math.floor(Math.random()*freeCodes.length), 1)[0];
 					// split code into a sequence of 4 bit-pairs, i.e., base-4 representation
 					code = byteToCode(code);
-					console.log("as base4:", code);
 					playersByBattleId[code] = req.state.id;
 					battleIdsByPlayer[req.state.id] = code;
 					// progress to code display
@@ -157,7 +152,6 @@ exports.process = async function(input, req) {
 			}
 
 			await stateHelper.saveState(null, opState);
-console.log("we just joined!", req.state);
 
 		}
 		if(input == "b") {

@@ -15,31 +15,22 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-const { createCanvas } = require("canvas");
+const { SVGCanvas } = require("./svgcanvas.js");
 
 exports.videoStreams = {};
 exports.homeURL = "https://archiveofourown.org/works/45988723#game";
 
 exports.pushNewFrame = function (res, canvas) {
-	var outBuffer = canvas.toBuffer("image/jpeg", { quality: 0.45 });
-	//var outBuffer = canvas.toBuffer("image/png", { compressionLevel: 9, palette: new Uint8ClampedArray([ 255,255,255,0, 0,0,0,0 ]) });
-	//res.write(`Content-length: ${outBuffer.length}\n\n`);
+	var outBuffer = canvas.toBuffer();
     res.write(outBuffer);
 	res.write(`--endofsection\n`);
-	res.write(`Content-Type:image/jpeg\n\n`);
-	
-	//res.write(`--endofsection\nContent-Type: image/jpeg\n\n`);
-    //res.write(outBuffer);
-		
-	//console.log(outBuffer.length);
+	res.write(`Content-Type:image/svg+xml\n\n`);
 }
 
 exports.getCanvasAndCtx = function() {
 	var dims = [160, 144];
-	const canvas = createCanvas(dims[0], dims[1]);
+	const canvas = new SVGCanvas(dims[0], dims[1], "#fff", "#000");
     const ctx = canvas.getContext('2d');
-	ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, dims[0], dims[1]);
 	return [canvas, ctx];
 }
 
@@ -66,31 +57,14 @@ exports.oneToNPos = function(n, input, req) {
 }
 
 exports.displayPP = function(ctx, pp, maxPP) {
-    ctx.beginPath();
-    ctx.fillStyle = "#fff";
-	ctx.lineWidth = 2;
-    ctx.rect(90, 83, 67, 17);
-    ctx.stroke();
-    ctx.fill();
-    ctx.closePath();
-
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 12px courier";
-    ctx.fillText("PP: " + pp + "/" + maxPP, 94, 96);
+    ctx.rect(90, 83, 67, 17, "#fff", "#000", 2);
+    ctx.fillText("PP: " + pp + "/" + maxPP, 94, 96, 11.5);
 }
 
 exports.displayBoxText = function(ctx, text) {
-    ctx.beginPath();
-    ctx.fillStyle = "#fff";
-	ctx.lineWidth = 2;
-    ctx.rect(2, 102, 157, 40);
-    ctx.stroke();
-    ctx.fill();
-    ctx.closePath();
 
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 12px courier";
-	//ctx.font = "12px 'Noto Emoji'";
+    ctx.rect(2, 102, 156, 40, "#fff", "#000", 2);
+
     // find the longest substring length<=22 prior to a space and split input
     var lines = text.match(/(^.{0,22})( .{0,22})?( .{0,22})?$/);
     

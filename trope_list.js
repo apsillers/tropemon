@@ -26,15 +26,11 @@ exports.render = function (req, ctx) {
 	for(var i=1; i<=6; i++) {
 		var trope = tropes.tropeFromState(req.state["trope" + i]);
 		if(!trope) { continue; }
-		ctx.fillStyle = "#000";
-		ctx.font = "bold 15px 'Noto-Emoji'";
-	    ctx.fillText(trope.emoji, 15, i*23 - 4);
-		ctx.font = "bold 10px courier";
-		drawHPBar(ctx, 35, i*23- 10, trope.name.toUpperCase(), trope.hp, trope.maxHP, trope.xp, trope.level)
+	    ctx.fillText(trope.emoji, 12, i*23 - 4, 15);
+		drawHPBar(ctx, 32, i*23- 10, trope.name.toUpperCase(), trope.hp, trope.maxHP, trope.xp, trope.level)
 	}
 	
-	ctx.font = "bold 14px courier";
-	ctx.fillText(">", 8, 23 * ((req.state.cursorPos & 7)) - 5);
+	ctx.fillText(">", 7, 23 * ((req.state.cursorPos & 7)) - 5);
 	
 	if(req.state.cursorPos & 56) {
 		ctx.fillText("*", 0, 23 * ((req.state.cursorPos & 56) >> 3) - 5);
@@ -148,27 +144,10 @@ exports.process = function(input, req) {
 }
 
 function drawHPBar(ctx, x, y, name, hp, max, xp, level) {
-    ctx.beginPath();
-    ctx.strokeStyle = "#000";
-    ctx.fillStyle = "#000";
-	ctx.lineWidth = 1;
-    ctx.rect(x+1,y,70,3);
-    ctx.stroke();
-    ctx.rect(x+1,y+1, 70 * hp / max, 1)
-    ctx.stroke();
-    ctx.closePath();
-	
-	ctx.beginPath();
-    ctx.strokeStyle = "#000";
-    ctx.fillStyle = "#000";
-	ctx.lineWidth = 1;
-    ctx.rect(x+1,y+6,70,4);
-    ctx.stroke();
-    ctx.rect(x+1,y+7, 70 * Math.min((xp / (level * 100)), 1), 2)
-    ctx.stroke();
-    ctx.closePath();
+    ctx.rect(x+1,y+1,70,3);
+    ctx.rect(x+2,y+2, 68 * hp / max, 1, "", "#0c0")
+    ctx.rect(x+1,y+6, 70 * Math.min((xp / (level * 100)), 1), 1, "", "#c0c")
 
-    ctx.fillText(name, x, y-2);
-    ctx.fillText(`HP ${hp}/${max}`, x+75, y);
-    ctx.fillText(`Lv${level}`, x+75, y+9);
+    ctx.fillText(name.padEnd(12) + ` HP ${hp}/${max}`, x, y-2, 10);
+    ctx.fillText(`Lv${level}`, x+77, y+9, 10);
 }

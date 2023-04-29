@@ -20,10 +20,10 @@ var utils = require("./utils.js");
 var tropes = require("./tropes.js");
 var moves = require("./moves.json");
 
-exports.drawCombat = function drawCombat(req, ctx) {
+exports.drawCombat = function drawCombat(req, ctx, isTop) {
 	if(req.state.dialogPos == 10) {
 		utils.displayBoxText(ctx, "Hey, you can't catch other authors' tropes! That's plagiarism!");
-	} else {
+	} else if(isTop) {
 	    var topDialog = "  ATTACK     CATCH       TROPES     RUN";
 	    utils.displayBoxText(ctx, topDialog.replace(new RegExp(`(?<=.{${[0,11,23,34][req.state.cursorPos]}}).`), ">"));
 	}
@@ -31,14 +31,10 @@ exports.drawCombat = function drawCombat(req, ctx) {
     var myTrope = tropes.tropeFromState(req.state["trope" + req.state.whichTropeActive]);
 	var opTrope = tropes.tropeFromState(req.state["tropeOpponent"]);
 	
-	ctx.font = "40px 'Noto-Emoji'";
-	ctx.fillText(opTrope.emoji, 90, 40);
-	ctx.fillText(myTrope.emoji, 10, 80);
-	ctx.font = "12px courier";
+	ctx.fillText(opTrope.emoji, 90, 40, 40);
+	ctx.fillText(myTrope.emoji, 10, 80, 40);
 	drawHPBar(ctx, 4, 20, opTrope.name.toUpperCase(), opTrope.hp, opTrope.maxHP, opTrope.level);
     drawHPBar(ctx, 72, 65, myTrope.name.toUpperCase(), myTrope.hp, myTrope.maxHP, myTrope.level);
-	
-    ctx.font = "12px courier";
 }
 
 // render attack list and output
@@ -48,7 +44,7 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 	var myTrope = tropes.tropeFromState(req.state["trope" + req.state.whichTropeActive]);
 	req.state["trope" + req.state.whichTropeActive] = myTrope;
 	
-	console.log(req.state.id, "at the top, whichTropeActive ==", req.state.whichTropeActive)
+	//console.log(req.state.id, "at the top, whichTropeActive ==", req.state.whichTropeActive)
 	
 	if(req.state.opponentId) {
 		var opState = await stateHelper.createStateObjectFromID(req.state.opponentId);
@@ -57,7 +53,7 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 	var opTrope = tropes.tropeFromState(req.state["tropeOpponent"]);
 	req.state["tropeOpponent"] = opTrope;
 	
-	console.log(req.state.id, "drawing attack and opponentNextMove is", req.state.opponentNextMove);
+	//console.log(req.state.id, "drawing attack and opponentNextMove is", req.state.opponentNextMove);
 	
 	// signal to return to battle top menu
 	if(req.state.cursorPos == 99) {
@@ -77,7 +73,7 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 	    utils.displayBoxText(ctx, attacksDialog.replace(new RegExp(`(?<=.{${[0,11,23,34][req.state.cursorPos]}}).`), ">"));
 		var moveStats =  moves.find(m=>m.name == myTrope.learnedMoves[req.state.cursorPos]);
 		if(moveStats) {
-			console.log(myTrope["pp"+(req.state.cursorPos+1)], moveStats);
+			//console.log(myTrope["pp"+(req.state.cursorPos+1)], moveStats);
 			utils.displayPP(ctx, myTrope["pp"+(req.state.cursorPos+1)], moveStats.pp);
 		}
 	} else {
@@ -98,7 +94,7 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 				
 				await stateHelper.saveState(null, opState);
 
-				console.log(req.state.id, "dialog 1, set opponent's opponentNextMove to", opState.opponentNextMove)
+				//console.log(req.state.id, "dialog 1, set opponent's opponentNextMove to", opState.opponentNextMove)
 				
 				// If our opponent already selected their next move and pushed it into our state,
 				//   then each player now knows their opponent's next move.
@@ -113,7 +109,7 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 					
 					await stateHelper.saveState(null, opState);
 					
-					console.log(req.state.id, "opponent already picked attacks so we are telling them to draw")
+					//console.log(req.state.id, "opponent already picked attacks so we are telling them to draw")
 					
 					// if our opponent has an active image stream, render to a new canvas and push it to their stream
 					// (otherwise, if their not online, things will just render whenever they return and start a new stream)
@@ -400,7 +396,7 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 			if(opTrope.hp != 0 && myTrope.hp != 0) {
 				req.state.cursorPos = 0;
 				req.state.dialogPos = 0;
-				await scenes.BATTLE_TOP.render(req, ctx);
+				await scenes.BATTLE_TOP.render(req, ctx, true);
 				req.state.scene = scenes.BATTLE_TOP.id;
 				//req.state.cursorPos = 99;
 				req.state.opponentMove = 99;
@@ -558,8 +554,7 @@ exports.processAfterBattleInput = function(input, req) {
 exports.drawAfterBattle = function(req, ctx) {
 	    if(req.state.dialogPos == 0) {
 			utils.displayBoxText(ctx, "Good hustle, everyone!");
-			ctx.font = "80px 'Noto Emoji'";
-	    		ctx.fillText('👍', 30, 80);
+			ctx.fillText('👍', 30, 80, 80);
 			return;
 		}
 		var msg;
@@ -582,8 +577,7 @@ exports.drawAfterBattle = function(req, ctx) {
 		}
 
 		utils.displayBoxText(ctx, msg);
-		ctx.font = "80px 'Noto-Emoji'";
-		ctx.fillText(nextTrope.emoji, 30, 80);
+		ctx.fillText(nextTrope.emoji, 30, 80, 80);
 		
 }
 
@@ -605,8 +599,7 @@ exports.processRun = function(input, req) {
 
 exports.drawRun = function(req, ctx) {
 	utils.displayBoxText(ctx, "All right, beat it, then! Get outta here!");
-	ctx.font = "80px 'Noto Emoji'";
-	ctx.fillText('🏃', 30, 80);
+	ctx.fillText('🏃', 30, 80, 80);
 
 }
 
@@ -643,15 +636,8 @@ function nextEvolvedTrope(req) {
 }
 
 function drawHPBar(ctx, x, y, name, hp, max, level) {
-    ctx.beginPath();
-    ctx.strokeStyle = "#000";
-    ctx.fillStyle = "#000";
-	ctx.lineWidth = 1;
     ctx.rect(x+1,y,70,3);
-    ctx.stroke();
     ctx.rect(x+1,y+1, 70 * hp / max, 1)
-    ctx.stroke();
-    ctx.closePath();
 
     ctx.fillText(name, x, y-2);
     ctx.fillText(`${hp}/${max}`, x, y+14);

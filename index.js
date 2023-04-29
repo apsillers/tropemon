@@ -21,18 +21,17 @@ const fs = require("fs");
 const cp = require("child_process");
 const express = require("express");
 const cookieParser = require('cookie-parser');
-const { loadImage, createCanvas, registerFont } = require('canvas');
 const jspack = require("jspack");
 const utils = require("./utils.js");
 
 const stateHelper = require("./state.js");
 
-registerFont("./NotoEmoji-Regular.ttf", { family: "Noto Emoji",  weight: 'normal', style: 'normal' });
-registerFont("./CourierPrime-Bold.ttf", { family: "Courier",  weight: 'bold', style: 'normal' });
+//registerFont("./NotoEmoji-Regular.ttf", { family: "Noto Emoji",  weight: 'normal', style: 'normal' });
+//registerFont("./CourierPrime-Bold.ttf", { family: "Courier",  weight: 'bold', style: 'normal' });
 
 var options = {
-  key: fs.readFileSync('../stack/letsencrypt/certificates/tropemon.com.key'),
-  cert: fs.readFileSync('../stack/letsencrypt/certificates/tropemon.com.crt')
+//  key: fs.readFileSync('../stack/letsencrypt/certificates/tropemon.com.key'),
+//  cert: fs.readFileSync('../stack/letsencrypt/certificates/tropemon.com.crt')
 };
 
 const app = express();
@@ -73,12 +72,9 @@ app.get("/screen", async function(req, res) {
         'Content-Type': 'multipart/x-mixed-replace; boundary=--endofsection'
     });
 	
-	utils.displayBoxText(ctx, "");
-	res.write(`Content-Type:image/jpeg\n\n`);
-	res.write(canvas.toBuffer("image/jpeg", { quality: 0.1 }));
+	res.write(`Content-Type:image/svg+xml\n\n`);
+	res.write(canvas.toBuffer());
 	res.write(`--endofsection\n`);
-	ctx.fillStyle = "white";
-    ctx.fillRect(0, 0, dims[0], dims[1]);
 	
 	await scenes.find(req.state.scene).render(req, ctx, canvas);
 	
@@ -87,7 +83,7 @@ app.get("/screen", async function(req, res) {
 	//ctx.font = "12pt courier";
 	//ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
 	
-	res.write(`Content-Type:image/jpeg\n\n`);
+	res.write(`Content-Type:image/svg+xml\n\n`);
 	
 
     pushNewFrame(res, canvas);
@@ -156,10 +152,9 @@ app.get("/escapeHatch", async function controlInput(req, res) {
 });
 	
 
-https.createServer(options, app).listen(3000);
+http.createServer(options, app).listen(3000);
 //https.createServer(options, app).listen(443);
 //http.createServer(options, app).listen(3000);
-
 
 function backupState() {
 	fs.writeFile("./state.json", JSON.stringify(stateHelper.state), err=>{

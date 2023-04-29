@@ -59,20 +59,17 @@ exports.drawIntro = function drawIntro(req, ctx) {
 	
 	// after page 8, move professor to the side and render some tropes
 	if(req.state.dialogPos < 8) {
-	    ctx.font = "80px 'Noto Emoji'";
-	    ctx.fillText('👨‍🔬', 30, 80);
+	    ctx.fillText('👨‍🔬', 25, 80, 80);
 	} else {
-	    ctx.font = "80px 'Noto Emoji'";
-	    ctx.fillText('👨‍🔬', 75, 80);
+	    ctx.fillText('👨‍🔬', 75, 80, 80);
 		
-		ctx.font = "18px 'Noto Emoji'";
-	    ctx.fillText('🌀Fluff', 2, 30);
+	    ctx.fillText('🌀Fluff', 2, 30, 18);
 		
 		if(req.state.dialogPos >= 10) {
-			ctx.fillText('🥺Angst', 2, 60);
+			ctx.fillText('🥺Angst', 2, 60, 18);
 		}
 		if(req.state.dialogPos >= 12) {
-			ctx.fillText('😘Smut', 2, 90);
+			ctx.fillText('😘Smut', 2, 90, 18);
 		}
 	}		
 }

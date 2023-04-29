@@ -29,7 +29,7 @@ var tropes = [
   { "num":7, "name":"Rarepair", "emoji":"💏", "moves":[["PDA",1], ["Coat Swap", 1], ["Puppy Eyes", 3], ["Body Swap", 6]], "baseHP":15, "hpLvl":7, "evolve":[8,5], "type":"F" },
   { "num":8, "name":"Crackship", "emoji":"👯‍♂️", "moves":[["PDA",1], ["Coat Swap", 1], ["Puppy Eyes", 3], ["Body Swap", 6]], "baseHP":15, "hpLvl":7, "type":"F", "minLevel":5 },
 
-  { "num":9, "name":"Dead Dove", "emoji":"🐦", "moves":[["Whump",1], ["Despair", 1], ["Bemoan", 3], ["MCD", 6]], "baseHP":12, "hpLvl":7, "type":"A", "minLevel":7 },
+  { "num":9, "name":"Dead Dove", "emoji":"🕊️", "moves":[["Whump",1], ["Despair", 1], ["Bemoan", 3], ["MCD", 6]], "baseHP":12, "hpLvl":7, "type":"A", "minLevel":7 },
 
   { "num":10, "name":"Hotpants", "emoji":"👖", "moves":[["Thrust",1], ["Harden", 1], ["Sling", 3], ["Suck", 6]], "baseHP":15, "hpLvl":5, "type":"S", "minLevel":7 },
 
