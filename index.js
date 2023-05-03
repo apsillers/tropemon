@@ -18,16 +18,11 @@
 const https = require("https");
 const http = require("http");
 const fs = require("fs");
-const cp = require("child_process");
 const express = require("express");
 const cookieParser = require('cookie-parser');
-const jspack = require("jspack");
 const utils = require("./utils.js");
 
 const stateHelper = require("./state.js");
-
-//registerFont("./NotoEmoji-Regular.ttf", { family: "Noto Emoji",  weight: 'normal', style: 'normal' });
-//registerFont("./CourierPrime-Bold.ttf", { family: "Courier",  weight: 'bold', style: 'normal' });
 
 var options = {
 //  key: fs.readFileSync('../stack/letsencrypt/certificates/tropemon.com.key'),
@@ -36,7 +31,6 @@ var options = {
 
 const app = express();
 app.use(cookieParser());
-
 app.use(express.static('public'))
 
 // read or initialize the state cookie on each request,
@@ -52,8 +46,6 @@ app.use(async function (req, res, next) {
 
 var videoStreams = utils.videoStreams;
 var pushNewFrame = utils.pushNewFrame;
-
-var dims = [160, 144];
 
 // whenever the user asks for the /screen,
 //   create a new entry in `videoStream` object with this kept-open response,
