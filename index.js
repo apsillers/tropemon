@@ -39,7 +39,8 @@ app.use(cookieParser());
 
 app.use(express.static('public'))
 
-// read or initialize the state cookie
+// read or initialize the state cookie on each request,
+// by reading (or creating) a cookie with an "id" value
 app.use(async function (req, res, next) {
 	var id = req.cookies.id;
 	//console.log("id is", id);
@@ -49,15 +50,16 @@ app.use(async function (req, res, next) {
 	next();
 });
 
-const EventEmitter = require("events");
-EventEmitter.defaultMaxListeners = 0;
-
 var videoStreams = utils.videoStreams;
 var pushNewFrame = utils.pushNewFrame;
 
 var dims = [160, 144];
 
-// whenever the user asks for the /screen...
+// whenever the user asks for the /screen,
+//   create a new entry in `videoStream` object with this kept-open response,
+//   indexed by cookie ID, so we can push to it as needed.
+// We will never willingly close this response,
+//   but it will close when the user navigates away or times out.
 app.get("/screen", async function(req, res) {
 	const scenes = require("./scenes.js");
 	videoStreams[req.state.id] = res;
@@ -78,13 +80,13 @@ app.get("/screen", async function(req, res) {
 	await scenes.find(req.state.scene).render(req, ctx, canvas);
 	
 	// debug
-	//ctx.fillStyle = "black";
-	//ctx.font = "12pt courier";
 	//ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
 	
 	res.write(`Content-Type:image/svg+xml\n\n`);
 	pushNewFrame(res, canvas);
 
+	// Firefox kills the image feed upon getting any 204 (even a separate request!)
+	// so we have to use a redirect-and-reload approach
 	if(req.headers['user-agent'].match(/Firefox/)) {
 		res.end();
 	}
@@ -103,6 +105,7 @@ app.get(["/d","/u","/r","/l","/a","/b"], async function controlInput(req, res) {
 
 	var controlMap = { "/d":"down", "/u":"up", "/r":"right", "/l":"left", "/a":"a", "/b":"b" };
 
+	// look up the the state's current scene and process this input
 	await scenes.find(req.state.scene).process(controlMap[req.originalUrl], req, ctx);
 
 	// Firefox kills the image feed upon getting any 204 (even a separate request!)
@@ -113,14 +116,13 @@ app.get(["/d","/u","/r","/l","/a","/b"], async function controlInput(req, res) {
 		return;
 	}
 
-
+	// look up the current state (which might have changed) and render state as visual output
 	await scenes.find(req.state.scene).render(req, ctx, canvas);
+	
+	// save mutated state back into the database
 	await stateHelper.saveState(res, req.state);
 
-
 	// debug
-	//ctx.fillStyle = "black";
-	//ctx.font = "12pt courier";
 	//ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
 
 	if(screenRes) { pushNewFrame(screenRes, canvas); }
@@ -128,9 +130,13 @@ app.get(["/d","/u","/r","/l","/a","/b"], async function controlInput(req, res) {
 	res.status(204).end();
 });
 
+// hey, I coded this in like 4 weeks
+// if your state is absolutely borked somehow, this endpoint will reset your state
 app.get("/escapeHatch", async function controlInput(req, res) {
 	const scenes = require("./scenes.js");
 
+	// still in the intro? you can't possibly have messed up your state yet, right??
+	// and you might not even have your starter Trope
 	if(scenes.find(req.state.scene) == scenes.INTRO) {
 		res.redirect(utils.homeURL);
 	}
