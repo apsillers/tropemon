@@ -41,12 +41,12 @@ app.use(express.static('public'))
 
 // read or initialize the state cookie
 app.use(async function (req, res, next) {
-    var id = req.cookies.id;
+	var id = req.cookies.id;
 	//console.log("id is", id);
-    req.state = await stateHelper.createStateObjectFromID(id);
+	req.state = await stateHelper.createStateObjectFromID(id);
 	await stateHelper.saveState(res, req.state);
 	//console.log("state is ", req.state);
-    next();
+	next();
 });
 
 const EventEmitter = require("events");
@@ -64,13 +64,12 @@ app.get("/screen", async function(req, res) {
 
 	var [canvas, ctx] = utils.getCanvasAndCtx();
 
-    res.writeHead(200, {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0',
-        Pragma: 'no-cache',
-        Connection: 'close',
-
-        'Content-Type': 'multipart/x-mixed-replace; boundary=--endofsection'
-    });
+	res.writeHead(200, {
+		'Cache-Control': 'no-store, no-cache, must-revalidate, pre-check=0, post-check=0, max-age=0',
+		Pragma: 'no-cache',
+		Connection: 'close',
+		'Content-Type': 'multipart/x-mixed-replace; boundary=--endofsection'
+	});
 	
 	res.write(`Content-Type:image/svg+xml\n\n`);
 	res.write(canvas.toBuffer());
@@ -84,19 +83,17 @@ app.get("/screen", async function(req, res) {
 	//ctx.fillText(`c${req.state.cursorPos},d${req.state.dialogPos}`, 0, 10);
 	
 	res.write(`Content-Type:image/svg+xml\n\n`);
-	
-
-    pushNewFrame(res, canvas);
+	pushNewFrame(res, canvas);
 
 	if(req.headers['user-agent'].match(/Firefox/)) {
 		res.end();
 	}
 
-    // when the HTTP client disconnnects, remove its screen stream
-    res.on("close", _=>{
+	// when the HTTP client disconnnects, remove its screen stream
+	res.on("close", _=>{
 		console.log("closed");
-        delete videoStreams[req.state.id];
-    });
+		delete videoStreams[req.state.id];
+	});
 });
 
 app.get(["/d","/u","/r","/l","/a","/b"], async function controlInput(req, res) {
@@ -135,8 +132,8 @@ app.get("/escapeHatch", async function controlInput(req, res) {
 	const scenes = require("./scenes.js");
 
 	if(scenes.find(req.state.scene) == scenes.INTRO) {
-	    res.redirect(utils.homeURL);
-    }
+		res.redirect(utils.homeURL);
+	}
 
 	req.state.scene = scenes.MENU;
 	req.state.cursorPos = 0;
@@ -150,15 +147,8 @@ app.get("/escapeHatch", async function controlInput(req, res) {
 	
 	res.redirect(utils.homeURL);
 });
-	
 
 http.createServer(options, app).listen(3000);
 //https.createServer(options, app).listen(443);
 //http.createServer(options, app).listen(3000);
-
-function backupState() {
-	fs.writeFile("./state.json", JSON.stringify(stateHelper.state), err=>{
-		setTimeout(backupState, 5 * 60 * 1000);
-	});
-}
 
