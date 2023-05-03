@@ -22,7 +22,7 @@ exports.homeURL = "https://archiveofourown.org/works/45988723#game";
 
 exports.pushNewFrame = function (res, canvas) {
 	var outBuffer = canvas.toBuffer();
-    res.write(outBuffer);
+	res.write(outBuffer);
 	res.write(`--endofsection\n`);
 	res.write(`Content-Type:image/svg+xml\n\n`);
 }
@@ -30,12 +30,12 @@ exports.pushNewFrame = function (res, canvas) {
 exports.getCanvasAndCtx = function() {
 	var dims = [160, 144];
 	const canvas = new SVGCanvas(dims[0], dims[1], "#fff", "#000");
-    const ctx = canvas.getContext('2d');
+	const ctx = canvas.getContext('2d');
 	return [canvas, ctx];
 }
 
 exports.fourCornerPos = function(input, req) {
-    if(input == "down" && req.state.cursorPos < 2) { req.state.cursorPos += 2; }
+	if(input == "down" && req.state.cursorPos < 2) { req.state.cursorPos += 2; }
 	if(input == "up" && req.state.cursorPos > 1) { req.state.cursorPos -= 2; }
 	if(input == "right" && req.state.cursorPos % 2 == 0) { req.state.cursorPos += 1; }
 	if(input == "left" && req.state.cursorPos % 2 == 1) { req.state.cursorPos -= 1; }
@@ -62,23 +62,23 @@ exports.displayPP = function(ctx, pp, maxPP) {
 }
 
 exports.displayBoxText = function(ctx, text) {
+	// draw dialog box
+	ctx.rect(2, 102, 156, 40, "#fff", "#000", 2);
 
-    ctx.rect(2, 102, 156, 40, "#fff", "#000", 2);
-
-    // find the longest substring length<=22 prior to a space and split input
-    var lines = text.match(/(^.{0,22})( .{0,22})?( .{0,22})?$/);
+	// find the longest substring length<=22 prior to a space and split input
+	var lines = text.match(/(^.{0,22})( .{0,22})?( .{0,22})?$/);
     
 	if(lines == null) { ctx.fillText("ERROR too long", 4, 140-28); return; }
 	
-    // output first and optionally second lines
-    // trim leading space from second line
-    ctx.fillText(lines[1], 4, 140-28);
-    if(lines[2]) {
-        ctx.fillText(lines[2].substr(1), 4, 140-14);
-    }
-    if(lines[3]) {
-        ctx.fillText(lines[3].substr(1), 4, 140-2);
-    }
+	// output first and optionally second lines
+	// trim leading space from second line
+	ctx.fillText(lines[1], 4, 140-28);
+	if(lines[2]) {
+		ctx.fillText(lines[2].substr(1), 4, 140-14);
+	}
+	if(lines[3]) {
+		ctx.fillText(lines[3].substr(1), 4, 140-2);
+	}
 }
 
 exports.setFirstActiveTrope = function(req) {
