@@ -306,10 +306,13 @@ exports.drawAttackList = async function(req, ctx, canvas, isPush) {
 								deadTropesIdx.push(i);
 							}
 						}
-						var targetIdx = deadTropesIdx[Math.floor(Math.random()*deadTropesIdx.length)];
-                                                var target = tropes.tropeFromState(req.state["trope"+targetIdx]);
-						target.hp = Math.floor(target.maxHP * 0.25);
-						req.state["trope"+targetIdx] = target;
+						// only rez if there exists a K.O.'d trope
+						if(deadTropesIdx.length > 0) {
+							var targetIdx = deadTropesIdx[Math.floor(Math.random()*deadTropesIdx.length)];
+													var target = tropes.tropeFromState(req.state["trope"+targetIdx]);
+							target.hp = Math.floor(target.maxHP * 0.25);
+							req.state["trope"+targetIdx] = target;
+						}
 					}
 				}
 				if("attack" in effect) {
