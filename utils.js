@@ -31,6 +31,7 @@ exports.getCanvasAndCtx = function() {
 	var dims = [160, 144];
 	const canvas = new SVGCanvas(dims[0], dims[1], "#fff", "#000");
 	const ctx = canvas.getContext('2d');
+	ctx.rect(0,0,dims[0], dims[1]);
 	return [canvas, ctx];
 }
 
