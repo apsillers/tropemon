@@ -90,12 +90,12 @@ app.get("/screen", async function(req, res) {
 	});
 });
 
-app.get(["/d","/u","/r","/l","/a","/b"], async function controlInput(req, res) {
+app.get(["/d","/u","/r","/l","/a","/b","/on"], async function controlInput(req, res) {
 	const scenes = require("./scenes.js");
 	var screenRes = videoStreams[req.state.id];
 	var [canvas, ctx] = utils.getCanvasAndCtx();
 
-	var controlMap = { "/d":"down", "/u":"up", "/r":"right", "/l":"left", "/a":"a", "/b":"b" };
+	var controlMap = { "/d":"down", "/u":"up", "/r":"right", "/l":"left", "/a":"a", "/b":"b", "/on":"on" };
 
 	// look up the the state's current scene and process this input
 	await scenes.find(req.state.scene).process(controlMap[req.originalUrl], req, ctx);
@@ -146,7 +146,7 @@ app.get("/escapeHatch", async function controlInput(req, res) {
 	res.redirect(utils.homeURL);
 });
 
-http.createServer(options, app).listen(3000);
+http.createServer(options, app).listen(process.env.PORT || 3000);
 //https.createServer(options, app).listen(443);
 //http.createServer(options, app).listen(3000);
 
