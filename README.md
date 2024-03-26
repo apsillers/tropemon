@@ -26,6 +26,19 @@ If you want to contribute, I guess you could?! The code is absoultely shameful b
 
 "Tropémon" rhymes with "Pokémon" and I thought it would be funny to have fanfiction tropes fight each other, within a fan work that is itself a parody of Pokemon.
 
+## Setup
+
+To run the service, you need to point at a Redis instance (for storing player state) and then run the code.
+
+1. In the top directory, run `npm install` to install dependencies.
+2. Identify your Redis instance/credentails by setting the environment variables `REDISUSER`, `REDISPASS`, `REDISHOST`, `REDISPORT` (e.g., by `.env` file or command-line `export` or similar).
+3. Similarly set the `PORT` environment variable to set the HTTP port, or use the default of `3000`.
+4. Optionally, change the `homeURL` variable in `utils.js` to point to a redirect location.
+5. Start the service with `npm start`.
+6. Access the service at `http://localhost:3000/` (or whatever hostname and port your expect).
+
+The service is designed to be ruthlessly low-storage, so you can probably get by with a free Redis instance at https://app.redislabs.com if you like. (I personally do.)
+
 ## License
 
 This work is licensed under the GNU Affero General Public License, version 3, or (at your option) any other future version of that license published by the Free Software Foundation. Practiaclly, this means:
